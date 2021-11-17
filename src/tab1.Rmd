@@ -1,0 +1,100 @@
+```{r tab1, cache=cacheon}
+
+tab1 <- print(CreateTableOne(
+  vars = tabvars,
+  data = rsdata,
+  strata = "scream_aid"
+),
+missing = TRUE, printToggle = FALSE, nonnormal = tabvars,
+catDigits = 1, contDigits = 1,
+noSpaces = TRUE,
+explain = FALSE
+)
+
+tab1 <- as_tibble(cbind(var = rownames(tab1), tab1)) %>%
+  select(var, Missing, `A-/ID-`:p)
+
+tab1 <- tab1 %>%
+  # remove = Yes
+  mutate(across(everything(), str_replace_all, fixed(" = Yes"), "")) %>%
+  # to get labs and units in place
+  mutate(
+    var_tmp = str_split(var, " = ", simplify = TRUE)[, 1],
+    val_tmp = str_split(var, " = ", simplify = TRUE)[, 2],
+    # if recoding or categorizing will still get org label
+    var_tmp2 = str_replace_all(var_tmp, "(_cat2|_cat)", ""),
+    # if shf/sos combination  will still get org label
+    var_tmp2 = str_replace_all(var_tmp2, "shf_sos_com_", "sos_com_"),
+  )
+
+tab1 <- left_join(tab1,
+  meta.variables.Sheet.1 %>%
+    select(variable, label, unit),
+  by = c("var_tmp2" = "variable")
+) %>%
+  mutate(
+    Variable = coalesce(label, var_tmp),
+    Variable = if_else(!is.na(unit),
+      paste0(Variable, " (", unit, ")"),
+      Variable
+    ),
+    Variable = if_else(val_tmp != "",
+      paste0(Variable, " ", val_tmp),
+      Variable
+    )
+  )
+
+
+write.xlsx(tab1 %>%
+  select(Variable, Missing:p), paste0("./output/tabs/tab1_", Sys.Date(), ".xlsx"), rowNames = FALSE, overwrite = TRUE)
+
+# footnotes
+tab1 <- tab1 %>%
+  mutate(
+    footnote1 = if_else(str_detect(var, "^shf_"), footnote_marker_symbol(1), ""),
+    footnote2 = if_else(str_detect(var, "sos_"), footnote_marker_symbol(2), ""),
+    footnote3 = if_else(str_detect(var, "^scb_"), footnote_marker_symbol(3), ""),
+    footnote4 = if_else(var_tmp %in% modvars, footnote_marker_symbol(4), ""),
+    footnote5 = if_else(str_detect(var, "^shf_rasarni"), footnote_marker_symbol(5), ""),
+    footnote6 = if_else(str_detect(var, "^scb_dispincome_cat"), footnote_marker_symbol(6), ""),
+    footnote7 = if_else(str_detect(var, "^shf_ntprobnp_cat"), footnote_marker_symbol(7), "")
+  ) %>%
+  unite(footnote, starts_with("footnote"), sep = "") %>%
+  mutate(
+    # so no probs
+    Variable = sanitize_text(Variable),
+    Variable = paste0(Variable, footnote),
+
+    # space in Latex output (fix this other way?)
+    Variable = sub("  ", ". ", Variable)
+  ) %>%
+  select(Variable, Missing:p)
+
+
+## fix in order to use escape = TRUE
+colnames(tab1) <- sanitize_text(c(
+  "Variables", "Missing (%)", levels(rsdata$scream_aid), "p-value"
+))
+
+footnote(
+  default_kable(tab1,
+    font_size = 6,
+    caption = "Baseline characteristics by A/ID",
+    longtable = TRUE,
+    escape = FALSE
+  ) %>%
+    landscape(),
+  general = c(
+    "Categorical variables are presented with n (%) and tested with chi-square test and continuous variables with median [q1-q3] and tested with Kruskal-Wallis test."
+  ),
+  symbol = c(
+    "Source: SwedeHF",
+    "Source: KON/VAL",
+    "Source: SCB",
+    "Included in the multiple imputation model (althought not necessarily imputed if there is no missing data) and logistic/cox models",
+    "arb/acei/arni",
+    "Medium within index year",
+    "Medium within EF"
+  )
+)
+```

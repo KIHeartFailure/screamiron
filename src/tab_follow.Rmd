@@ -1,0 +1,26 @@
+```{r tab1follow, cache=cacheon}
+
+tabfollow <- print(CreateTableOne(
+  vars = c("scream_aid1yr", "scream_aid3yr"),
+  data = rsdata,
+  strata = "scream_aid"
+),
+missing = TRUE, printToggle = FALSE, nonnormal = tabvars,
+catDigits = 1, contDigits = 1,
+noSpaces = TRUE,
+explain = FALSE,
+test = FALSE
+)
+
+tabfollow <- as_tibble(cbind(Variable = rownames(tabfollow), tabfollow)) %>%
+  select(Variable, Missing, `A-/ID-`:`A+/ID+`) %>%
+  mutate(Variable = sanitize_text(Variable))
+
+default_kable(tabfollow,
+  font_size = 6,
+  caption = "Follow-up A/ID",
+  longtable = TRUE,
+  escape = FALSE
+) %>%
+  landscape()
+```
