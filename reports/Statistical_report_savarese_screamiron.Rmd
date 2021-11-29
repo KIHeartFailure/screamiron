@@ -53,7 +53,7 @@ cacheon <- TRUE
 
 ## Data source
 
-SCREAM
+SCREAM2
 
 ## Inclusion/exclusion criteria
 
@@ -81,11 +81,12 @@ default_kable(metaout, caption = "Comorbidities and outcomes from VAL/KON")
 
 The labvalues from SCREAM are selected within 90 days prior to index in SwedeHF, 
 where the one closest to index is chosen. If there are two tests of the same lab 
-from the same date the mean is calculated. The different labs are not necessarily from the same date. OK?
+from the same date the mean is calculated. The ferritin, transferrin and 
+hb value must be from the same date, the other labs can be from different dates (within the 90 days).
 
-The evaluation of ID/A at 1 and 3 years is including patients with at least one available 
-lab of ferritin, transferrin and hb (not necessarily on same date) at 1 year after index +/- 6 months 
-and 3 years after index +/- 6 months. The lab value closest to 1 and 3 years respectively is chosen. OK????
+The evaluation of ID/A at 6 months, 1 and 3 years is including patients with at least one available 
+lab of ferritin, transferrin and hb at the same date at 6 months after index +/- 3 months, 1 years after index +/- 3 months 
+and 3 years after index +/- 3 months. The lab values closest to the respective time points is chosen. 
 
 # Statistical analysis 
 
@@ -95,9 +96,15 @@ All analyses were performed using `r sessionInfo()$R.version$version.string` [@r
 The level of significance is set to 5%, two-sided. No adjustment for multiple 
 comparisons were made and therefore the results should be viewed with some care.
 
+## Missing data
+
+Missing data was imputed with multiple imputation (n = 10) using mice [@mice]. 
+Variables included in the model are indicated in 
+Table \ref{tab:tab1aid}. 
+
 ## Baseline characteristics
 
-CHECK VARIABLES AND VARIABLES IN MODEL.CATEGORIZE SODIUM? 
+CHECK VARIABLES IN TABLE AND MODEL.
 
 ```{r, child = "../src/tab1.Rmd"}
 
@@ -108,6 +115,92 @@ CHECK VARIABLES AND VARIABLES IN MODEL.CATEGORIZE SODIUM?
 ```{r, child = "../src/tab_follow.Rmd"}
 
 ```
+
+\clearpage
+
+## Predictors of ID at index
+
+The association between baseline covariates and ID was investigated using 
+logistic regression partly in the overall cohort and partly separately in EF subgroups. 
+
+A p-value for interaction between EF and the respective variable (with the other variables in the model) is also presented. 
+(I did not present the OR ect from the interaction model because it seems 
+a bit untransparant when I thought about it, then the ORs would all be from separate models...). 
+
+DO YOU PERHAPS WANT TO GROUP SODIUM? (all other vars are categorical)
+
+```{r, child = "../src/pred_id.Rmd"}
+
+```
+
+\clearpage
+
+## Outcomes 
+
+The following outcomes are considered: 
+
+- CV mortality + first HF hospitalization (is this the primary outcome???)
+- CV mortality
+- All-cause mortality
+- First HF hospitalization
+- Total HF hospitalization
+
+Data were censored at 2019-12-31 or death/move from Stockholm county. DO YOU WANT TO CUT OUTCOMES AT A CERTAIN TIMEPOINT?
+
+### Association between ID/A and outcomes
+
+Time to first events were presented with 1-Kaplan-Meier curves for the outcome all-cause mortality 
+and cumulative incidence curves treating death as a competing event for other outcomes. 
+The mean cumulative function (MCF) was used to depict the recurrent events. 
+
+Cox proportional hazards regressions were 
+used to model the time to first event, partly crude including only ID/A in the model 
+and partly adjusted for variables indicated in 
+Table \ref{tab:tab1aid}. The variables were selected based on clinical relevance. 
+
+As a consistency analysis, the primary outcome CV mortality + first HF hospitalization, 
+was modelled using a sub-distributional hazards model [@fg] where death was treated as a 
+competing event. 
+
+Recurrent events were model using a negative binomial model 
+including the log of time as an offset in the model, crude and adjusted as above. 
+
+The median (min-max) follow-up is 
+`r rsdata %>% summarise(med = fn(median(sos_outtime_death / 365.25 * 12), dig = 1),
+                                             min = fn(min(sos_outtime_death / 365.25 * 12), dig = 1),
+                                             max = fn(max(sos_outtime_death / 365.25 * 12), dig = 1)) %>%
+                                   mutate(out = paste0(med, " (", min, "-", max, ")")) %>%
+                                   pull(out)` months for a total of 
+                                   `r rsdata %>% 
+                                   summarise(sumpy = fn(sum(sos_outtime_death) / 365.25, dig = 0)) %>%
+                                   pull(sumpy)` patient-years of follow-up.
+
+```{r, child = "../src/km_aid.Rmd"}
+
+```
+
+```{r, child = "../src/outtab_aid.Rmd"}
+
+```
+
+\newpage
+
+### Association between ID and outcomes by EF
+
+Cox proportional hazards regressions were 
+used to model the time to first event, partly crude, including only ID in the model 
+and partly adjusted for variables indicated in 
+Table \ref{tab:tab1aid} partly in the overall cohort and partly 
+presented in EF subgroups using interaction effects. 
+
+Recurrent events were model using a negative binomial model 
+including the log of time as an offset in the model, crude and adjusted as above. 
+
+```{r, child = "../src/outtab_idef.Rmd"}
+
+```
+
+\newpage
 
 # Reproducibility
 

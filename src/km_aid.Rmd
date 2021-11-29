@@ -1,0 +1,234 @@
+```{r km, cache=cacheon}
+
+kmfunc <- function(data, time, event, eventcr = NULL, eventname, yposplus = rep(0, 4)) {
+  cexmy <- 1.5
+  fits <- survfit(formula(paste0("Surv(", time, ",", event, "=='Yes') ~ scream_aid")),
+    data = data
+  ) # needed also for cuminc for n at risk
+
+  if (!is.null(eventcr)) {
+    fit <- cuminc(
+      ftime = data %>% pull(!!sym(time)),
+      fstatus = data %>% pull(!!sym(eventcr)),
+      cencode = 0,
+      group = data %>% pull(scream_aid)
+    )
+
+    # c(bottom, left, top, right)
+    par(mar = c(8.5, 8.6, 1, 4.25) + 0.1)
+
+    plot(fit[1:4],
+      ylab = eventname,
+      col = global_kicols,
+      wh = c(1110, 1110),
+      xlim = c(0, 5 * 365),
+      ylim = c(0, 1),
+      xlab = "Years",
+      cex.lab = cexmy,
+      axes = F,
+      lwd = 4,
+      lty = c(1, 2, 3, 4),
+      xaxs = "i", yaxs = "i"
+    )
+  } else {
+    # c(bottom, left, top, right)
+    par(mar = c(8.5, 8.6, 1, 4.25) + 0.1)
+    plots <- plot(fits,
+      fun = "event",
+      ylab = eventname,
+      xscale = 365,
+      yscale = 100,
+      col = global_kicols,
+      mark.time = FALSE,
+      bty = "n",
+      xlim = c(0, 5 * 365),
+      ylim = c(0, 1),
+      xlab = "Years",
+      cex.lab = cexmy,
+      axes = F,
+      lwd = 3,
+      lty = c(1, 2, 3, 4),
+      xaxs = "i", yaxs = "i"
+    )
+  }
+
+  axis(2, seq(0, 1, 0.25), seq(0, 100, 25), las = 2, cex.axis = cexmy)
+  axis(1, at = seq(0, 5, 1) * 365, seq(0, 5, 1), cex.axis = cexmy)
+
+  if (!is.null(eventcr)) {
+    ypos <- timepoints(fit[1:4], 364.5 * 5)$est
+  } else {
+    ypos <- 1 - summary(fits, 364.5 * 5)$surv
+  }
+
+  ylabs <- bind_cols(
+    ypos = c(ypos + yposplus),
+    ytext = levels(data %>% pull(scream_aid))
+  )
+
+  mtext(
+    side = 4,
+    line = .2,
+    at = ylabs$ypos,
+    ylabs$ytext,
+    las = 1,
+    cex = cexmy,
+  )
+
+  mtext("No. at risk", side = 1, line = 3.5, at = -540, adj = 0, cex = cexmy, font = 2)
+  mtext("A-/ID-", side = 1, line = 4.5, at = -540, adj = 0, cex = cexmy)
+  mtext("A+/ID-", side = 1, line = 5.5, at = -540, adj = 0, cex = cexmy)
+  mtext("A-/ID+", side = 1, line = 6.5, at = -540, adj = 0, cex = cexmy)
+  mtext("A+/ID+", side = 1, line = 7.5, at = -540, adj = 0, cex = cexmy)
+
+
+  nrisk <- summary(fits, seq(0, 5, 1) * 365, extend = T)
+
+  axis(1, at = seq(0, 5, 1) * 365, labels = nrisk$n.risk[nrisk$strata == "scream_aid=A-/ID-"], line = 3.5, tick = FALSE, cex.axis = cexmy)
+  axis(1, at = seq(0, 5, 1) * 365, labels = nrisk$n.risk[nrisk$strata == "scream_aid=A+/ID-"], line = 4.5, tick = FALSE, cex.axis = cexmy)
+  axis(1, at = seq(0, 5, 1) * 365, labels = nrisk$n.risk[nrisk$strata == "scream_aid=A-/ID+"], line = 5.5, tick = FALSE, cex.axis = cexmy)
+  axis(1, at = seq(0, 5, 1) * 365, labels = nrisk$n.risk[nrisk$strata == "scream_aid=A+/ID+"], line = 6.5, tick = FALSE, cex.axis = cexmy)
+}
+```
+
+```{r mcf, cache=cacheon}
+
+mcffunc <- function(data, datarec, event, eventname, yposplus = rep(0, 2)) {
+  cexmy <- 1.5
+  # needed for n at risk
+  fitsn <- survfit(Surv(sos_outtime_death, sos_out_death == "Yes") ~ scream_aid,
+    data = data
+  )
+
+  fits <- mcf(Recur(sos_outtime, LopNr, sos_out) ~ scream_aid, data = datarec)
+
+  # c(bottom, left, top, right)
+  par(mar = c(8.5, 8.6, 1, 4.25) + 0.1)
+
+  plot(fits@MCF$time[fits@MCF$scream_aid == "A-/ID-"],
+    fits@MCF$MCF[fits@MCF$scream_aid == "A-/ID-"],
+    type = "l",
+    ylab = eventname,
+    col = global_kicols[1],
+    xlim = c(0, 5 * 365),
+    ylim = c(0, 3),
+    xlab = "Years",
+    cex.lab = cexmy,
+    axes = F,
+    lwd = 4,
+    lty = 1,
+    xaxs = "i", yaxs = "i"
+  )
+
+  lines(fits@MCF$time[fits@MCF$scream_aid == "A+/ID-"],
+    fits@MCF$MCF[fits@MCF$scream_aid == "A+/ID-"],
+    col = global_kicols[2],
+    lwd = 3,
+    lty = 2
+  )
+
+  lines(fits@MCF$time[fits@MCF$scream_aid == "A-/ID+"],
+    fits@MCF$MCF[fits@MCF$scream_aid == "A-/ID+"],
+    col = global_kicols[3],
+    lwd = 3,
+    lty = 3
+  )
+
+  lines(fits@MCF$time[fits@MCF$scream_aid == "A+/ID+"],
+    fits@MCF$MCF[fits@MCF$scream_aid == "A+/ID+"],
+    col = global_kicols[4],
+    lwd = 3,
+    lty = 4
+  )
+
+  axis(2, seq(0, 3, 1), seq(0, 300, 100), las = 2, cex.axis = cexmy)
+  axis(1, at = seq(0, 5, 1) * 365, seq(0, 5, 1), cex.axis = cexmy)
+
+  # all no, all yes, no match
+  ypos <- c(
+    last(fits@MCF$MCF[fits@MCF$time <= 365 * 5 & fits@MCF$scream_aid == "A-/ID-"]),
+    last(fits@MCF$MCF[fits@MCF$time <= 365 * 5 & fits@MCF$scream_aid == "A+/ID-"]),
+    last(fits@MCF$MCF[fits@MCF$time <= 365 * 5 & fits@MCF$scream_aid == "A-/ID+"]),
+    last(fits@MCF$MCF[fits@MCF$time <= 365 * 5 & fits@MCF$scream_aid == "A+/ID+"])
+  )
+
+  ylabs <- bind_cols(
+    ypos = c(ypos + yposplus),
+    ytext = levels(data %>% pull(scream_aid))
+  )
+
+  mtext(
+    side = 4,
+    line = .2,
+    at = ylabs$ypos,
+    ylabs$ytext,
+    las = 1,
+    cex = cexmy,
+  )
+
+  mtext("No. at risk", side = 1, line = 3.5, at = -540, adj = 0, cex = cexmy, font = 2)
+  mtext("A-/ID-", side = 1, line = 4.5, at = -540, adj = 0, cex = cexmy)
+  mtext("A+/ID-", side = 1, line = 5.5, at = -540, adj = 0, cex = cexmy)
+  mtext("A-/ID+", side = 1, line = 6.5, at = -540, adj = 0, cex = cexmy)
+  mtext("A+/ID+", side = 1, line = 7.5, at = -540, adj = 0, cex = cexmy)
+
+  nrisk <- summary(fitsn, seq(0, 5, 1) * 365, extend = T)
+
+  axis(1, at = seq(0, 5, 1) * 365, labels = nrisk$n.risk[nrisk$strata == "scream_aid=A-/ID-"], line = 3.5, tick = FALSE, cex.axis = cexmy)
+  axis(1, at = seq(0, 5, 1) * 365, labels = nrisk$n.risk[nrisk$strata == "scream_aid=A+/ID-"], line = 4.5, tick = FALSE, cex.axis = cexmy)
+  axis(1, at = seq(0, 5, 1) * 365, labels = nrisk$n.risk[nrisk$strata == "scream_aid=A-/ID+"], line = 5.5, tick = FALSE, cex.axis = cexmy)
+  axis(1, at = seq(0, 5, 1) * 365, labels = nrisk$n.risk[nrisk$strata == "scream_aid=A+/ID+"], line = 6.5, tick = FALSE, cex.axis = cexmy)
+}
+```
+
+```{r deathcvhfh, fig.cap="CV death/first HFH", cache=cacheon, dependson="km", fig.width=8, fig.height=7}
+kmfunc(
+  data = rsdata,
+  time = "sos_outtime_hosphf",
+  event = "sos_out_deathcvhosphf",
+  eventcr = "sos_out_deathcvhosphf_cr",
+  eventname = "CV death/first HFH (%)",
+  yposplus = c(0, 0, 0, 0) #"A-/ID-" "A+/ID-" "A-/ID+" "A+/ID+"
+)
+```
+
+```{r deathcv, fig.cap="CV death", cache=cacheon, dependson="km", fig.width=8, fig.height=7}
+kmfunc(
+  data = rsdata,
+  time = "sos_outtime_death",
+  event = "sos_out_deathcv",
+  eventcr = "sos_out_deathcv_cr",
+  eventname = "CV death (%)",
+  yposplus = c(0, -0.02, 0, 0.02)
+)
+```
+
+```{r death, fig.cap="All-cause death", cache=cacheon, dependson="km", fig.width=8, fig.height=7}
+kmfunc(
+  data = rsdata,
+  time = "sos_outtime_death",
+  event = "sos_out_death",
+  eventname = "All-cause mortality (%)",
+  yposplus = c(0, 0, 0, 0)
+)
+```
+
+```{r hfh, fig.cap="First HFH", cache=cacheon, dependson="km", fig.width=8, fig.height=7}
+kmfunc(
+  data = rsdata,
+  time = "sos_outtime_hosphf",
+  event = "sos_out_hosphf",
+  eventcr = "sos_out_hosphf_cr",
+  eventname = "First HFH (%)",
+  yposplus = c(0, 0.01, -0.01, 0)
+)
+```
+
+```{r rechosphf, fig.cap="Total HFH", cache=cacheon, dependson="mcf", fig.width=8, fig.height=7}
+mcffunc(
+  data = rsdata,
+  datarec = rsdata_rec_hosphf,
+  event = "sos_out_nohosphf",
+  eventname = "Cumulative mean of HFH (per 100 patients)"
+)
+```

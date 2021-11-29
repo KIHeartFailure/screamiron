@@ -26,6 +26,7 @@ rsdata <- rsdata %>%
 
     # iron def
     scream_id = case_when(
+      is.na(scream_ferritin) | is.na(scream_transferrin) ~ NA_character_,
       scream_ferritin < 100 ~ "Yes",
       scream_ferritin <= 299 & scream_transferrin < 20 ~ "Yes",
       TRUE ~ "No"
@@ -54,7 +55,6 @@ rsdata <- rsdata %>%
       scream_transferrin < 20 ~ 2,
       TRUE ~ 1
     ), levels = 1:2, labels = c(">=20", "<20")),
-    
     iron_need = case_when(
       is.na(shf_weight) | is.na(scream_hb) ~ NA_real_,
       shf_weight >= 35 & shf_weight <= 70 & scream_hb < 100 ~ 1500,
@@ -64,7 +64,33 @@ rsdata <- rsdata %>%
       shf_weight > 70 & scream_hb >= 100 & scream_hb < 140 ~ 1500,
       shf_weight > 70 & scream_hb >= 140 & scream_hb <= 150 ~ 500
     ),
-    ## follow-up
+
+    ## lab follow-up
+    ### 6 mo
+    scream_anemia6mo = case_when(
+      is.na(scream_hb6mo) ~ NA_character_,
+      shf_sex == "Female" & scream_hb6mo < 120 | shf_sex == "Male" & scream_hb6mo < 130 ~ "Yes",
+      TRUE ~ "No"
+    ),
+
+    # iron def
+    scream_id6mo = case_when(
+      is.na(scream_ferritin6mo) | is.na(scream_transferrin6mo) ~ NA_character_,
+      scream_ferritin6mo < 100 ~ "Yes",
+      scream_ferritin6mo <= 299 & scream_transferrin6mo < 20 ~ "Yes",
+      TRUE ~ "No"
+    ),
+    scream_aid6mo = factor(case_when(
+      scream_id6mo == "Yes" & scream_anemia6mo == "Yes" ~ 4,
+      scream_id6mo == "Yes" & scream_anemia6mo == "No" ~ 3,
+      scream_id6mo == "No" & scream_anemia6mo == "Yes" ~ 2,
+      scream_id6mo == "No" & scream_anemia6mo == "No" ~ 1
+    ),
+    levels = 1:4,
+    labels = c("A-/ID-", "A+/ID-", "A-/ID+", "A+/ID+")
+    ),
+
+    ### 1 year
     scream_anemia1yr = case_when(
       is.na(scream_hb1yr) ~ NA_character_,
       shf_sex == "Female" & scream_hb1yr < 120 | shf_sex == "Male" & scream_hb1yr < 130 ~ "Yes",
@@ -73,6 +99,7 @@ rsdata <- rsdata %>%
 
     # iron def
     scream_id1yr = case_when(
+      is.na(scream_ferritin1yr) | is.na(scream_transferrin1yr) ~ NA_character_,
       scream_ferritin1yr < 100 ~ "Yes",
       scream_ferritin1yr <= 299 & scream_transferrin1yr < 20 ~ "Yes",
       TRUE ~ "No"
@@ -86,6 +113,8 @@ rsdata <- rsdata %>%
     levels = 1:4,
     labels = c("A-/ID-", "A+/ID-", "A-/ID+", "A+/ID+")
     ),
+
+    ### 3 years
     scream_anemia3yr = case_when(
       is.na(scream_hb3yr) ~ NA_character_,
       shf_sex == "Female" & scream_hb3yr < 120 | shf_sex == "Male" & scream_hb3yr < 130 ~ "Yes",
@@ -94,6 +123,7 @@ rsdata <- rsdata %>%
 
     # iron def
     scream_id3yr = case_when(
+      is.na(scream_ferritin3yr) | is.na(scream_transferrin3yr) ~ NA_character_,
       scream_ferritin3yr < 100 ~ "Yes",
       scream_ferritin3yr <= 299 & scream_transferrin3yr < 20 ~ "Yes",
       TRUE ~ "No"
@@ -209,8 +239,18 @@ rsdata <- rsdata %>%
     ),
     shf_followuplocation_cat = if_else(shf_followuplocation %in% c("Primary care", "Other"), "Primary care/Other",
       as.character(shf_followuplocation)
-    )
-  )
+    ),
+
+    ## Outomes
+    ### combined outcomes
+    sos_out_deathcvhosphf = if_else(sos_out_deathcv == "Yes" | sos_out_hosphf == "Yes", "Yes", "No"),
+
+    #### comp risk
+    sos_out_deathcvhosphf_cr = create_crevent(sos_out_deathcvhosphf, sos_out_death),
+    sos_out_deathcv_cr = create_crevent(sos_out_deathcv, sos_out_death),
+    sos_out_hosphf_cr = create_crevent(sos_out_hosphf, sos_out_death)
+  ) %>%
+  select(-starts_with("tmp_"))
 
 
 # ntprobnp

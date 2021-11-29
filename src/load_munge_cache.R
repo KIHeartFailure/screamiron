@@ -15,6 +15,9 @@ ProjectTemplate::cache("flow")
 ProjectTemplate::cache("metaout")
 
 ProjectTemplate::cache("rsdata")
+ProjectTemplate::cache("rsdata_rec_hosphf")
+
+ProjectTemplate::cache("imprsdata")
 
 ProjectTemplate::cache("tabvars")
 ProjectTemplate::cache("modvars")

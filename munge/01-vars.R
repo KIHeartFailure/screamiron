@@ -90,9 +90,10 @@ tabvars_not_in_mod <- c(
   "iron_need",
   "scream_hb",
   "scream_hb_cat",
-  "scream_anemia",
+  "scream_ferritin",
   "scream_ferritin_cat",
   "scream_ferritin_cat300",
+  "scream_transferrin",
   "scream_transferrin_cat",
   
   "shf_ferrocarboxymaltosis",
@@ -108,7 +109,8 @@ tabvars_not_in_mod <- c(
   "scream_gfrckdepi",
   "scream_ntprobnp", 
   
-  "sos_com_renal"
+  "sos_com_renal", 
+  "sos_com_bleed" 
 )
 
 modvars <- tabvars[!(tabvars %in% tabvars_not_in_mod)]

@@ -1,26 +1,64 @@
-```{r tab1follow, cache=cacheon}
+```{r tabfollow, cache=cacheon}
 
-tabfollow <- print(CreateTableOne(
-  vars = c("scream_aid1yr", "scream_aid3yr"),
-  data = rsdata,
-  strata = "scream_aid"
-),
-missing = TRUE, printToggle = FALSE, nonnormal = tabvars,
-catDigits = 1, contDigits = 1,
-noSpaces = TRUE,
-explain = FALSE,
-test = FALSE
-)
+tabfollowfunc <- function(data, stratavar, tabname) {
+  tabfollow <- print(CreateTableOne(
+    vars = c(
+      "scream_anemia6mo", "scream_id6mo", "scream_aid6mo",
+      "scream_anemia1yr", "scream_id1yr", "scream_aid1yr", 
+      "scream_anemia3yr", "scream_id3yr", "scream_aid3yr"
+    ),
+    data = data,
+    strata = stratavar
+  ),
+  missing = TRUE, printToggle = FALSE, nonnormal = tabvars,
+  catDigits = 1, contDigits = 1,
+  noSpaces = TRUE,
+  explain = FALSE,
+  test = FALSE
+  )
 
-tabfollow <- as_tibble(cbind(Variable = rownames(tabfollow), tabfollow)) %>%
-  select(Variable, Missing, `A-/ID-`:`A+/ID+`) %>%
-  mutate(Variable = sanitize_text(Variable))
+  tabfollow <- as_tibble(cbind(Variable = rownames(tabfollow), tabfollow)) %>%
+    select(Variable, Missing, everything()) %>%
+    mutate(Variable = Variable)
 
-default_kable(tabfollow,
-  font_size = 6,
-  caption = "Follow-up A/ID",
-  longtable = TRUE,
-  escape = FALSE
-) %>%
-  landscape()
+  default_kable(tabfollow,
+    font_size = 6,
+    scale_down = FALSE,
+    caption = paste0("Follow-up Lab at 6 mo, 1 year, 3 years ", tabname),
+    escape = TRUE
+  ) 
+}
+```
+
+
+```{r tabfollowaid, cache=cacheon, dependson="tabfollow"}
+tabfollowfunc(data = rsdata, stratavar = "scream_aid", "by ID/A")
+```
+
+```{r tabfollowaidref, cache=cacheon, dependson="tabfollow"}
+tabfollowfunc(rsdata %>% filter(shf_ef_cat == "HFrEF"), "scream_aid", "by ID/A - HFrEF")
+```
+
+```{r tabfollowaidmref, cache=cacheon, dependson="tabfollow"}
+tabfollowfunc(rsdata %>% filter(shf_ef_cat == "HFmrEF"), "scream_aid", "by ID/A - HFmrEF")
+```
+
+```{r tabfollowaidpef, cache=cacheon, dependson="tabfollow"}
+tabfollowfunc(rsdata %>% filter(shf_ef_cat == "HFpEF"), "scream_aid", "by ID/A - HFpEF")
+```
+
+```{r tabfollowid, cache=cacheon, dependson="tabfollow"}
+tabfollowfunc(rsdata, "scream_id", "by ID")
+```
+
+```{r tabfollowidref, cache=cacheon, dependson="tabfollow"}
+tabfollowfunc(rsdata %>% filter(shf_ef_cat == "HFrEF"), "scream_id", "by ID - HFrEF")
+```
+
+```{r tabfollowidmref, cache=cacheon, dependson="tabfollow"}
+tabfollowfunc(rsdata %>% filter(shf_ef_cat == "HFmrEF"), "scream_id", "by ID - HFmrEF")
+```
+
+```{r tabfollowidpef, cache=cacheon, dependson="tabfollow"}
+tabfollowfunc(rsdata %>% filter(shf_ef_cat == "HFpEF"), "scream_id", "by ID - HFpEF")
 ```
