@@ -178,6 +178,17 @@ rsdata <- rsdata %>%
       labels = c("normakalemia", "hypokalemia", "hyperkalemia"),
       levels = 1:3
     ),
+    
+    scream_sodium_cat = factor(
+      case_when(
+        is.na(scream_sodium) ~ NA_real_,
+        scream_sodium <= 135 ~ 1,
+        scream_sodium > 135 ~ 2
+      ),
+      labels = c("<=135", ">135"),
+      levels = 1:2
+    ),
+    
     shf_heartrate_cat = case_when(
       shf_heartrate <= 70 ~ "<=70",
       shf_heartrate > 70 ~ ">70"
@@ -240,6 +251,10 @@ rsdata <- rsdata %>%
     shf_followuplocation_cat = if_else(shf_followuplocation %in% c("Primary care", "Other"), "Primary care/Other",
       as.character(shf_followuplocation)
     ),
+    
+    scb_education_cat = case_when(scb_education %in% c("Compulsory school", "Secondary school") ~ "No university", 
+                                  scb_education %in% c("University") ~ "University" 
+                                  ), 
 
     ## Outomes
     ### combined outcomes
@@ -281,6 +296,35 @@ rsdata <- left_join(
     )
   ) %>%
   select(-ntmed)
+
+# income
+
+inc <- rsdata %>%
+  group_by(shf_indexyear) %>%
+  summarise(
+    incmed = quantile(scb_dispincome,
+                     probs = 0.5,
+                     na.rm = TRUE
+    ),
+    .groups = "drop_last"
+  )
+
+rsdata <- left_join(
+  rsdata,
+  inc,
+  by = c("shf_indexyear")
+) %>%
+  mutate(
+    scb_dispincome_cat2 = case_when(
+      scb_dispincome < incmed ~ 1,
+      scb_dispincome >= incmed ~ 2
+    ),
+    scb_dispincome_cat2 = factor(scb_dispincome_cat2,
+                                 levels = 1:2,
+                                 labels = c("Below medium", "Above medium")
+    )
+  ) %>%
+  select(-incmed)
 
 rsdata <- rsdata %>%
   mutate(across(where(is_character), factor))

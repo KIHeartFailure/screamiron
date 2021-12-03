@@ -88,6 +88,8 @@ The evaluation of ID/A at 6 months, 1 and 3 years is including patients with at 
 lab of ferritin, transferrin and hb at the same date at 6 months after index +/- 3 months, 1 years after index +/- 3 months 
 and 3 years after index +/- 3 months. The lab values closest to the respective time points is chosen. 
 
+ddd_ironoralsupp is defined as at least one dispensed prescription with ATC strting with B03AA, B03AB, B03AD or B03AE within 5 months prior up to 14 days after index. 
+
 # Statistical analysis 
 
 ## General
@@ -103,8 +105,6 @@ Variables included in the model are indicated in
 Table \ref{tab:tab1aid}. 
 
 ## Baseline characteristics
-
-CHECK VARIABLES IN TABLE AND MODEL.
 
 ```{r, child = "../src/tab1.Rmd"}
 
@@ -127,8 +127,6 @@ A p-value for interaction between EF and the respective variable (with the other
 (I did not present the OR ect from the interaction model because it seems 
 a bit untransparant when I thought about it, then the ORs would all be from separate models...). 
 
-DO YOU PERHAPS WANT TO GROUP SODIUM? (all other vars are categorical)
-
 ```{r, child = "../src/pred_id.Rmd"}
 
 ```
@@ -145,7 +143,7 @@ The following outcomes are considered:
 - First HF hospitalization
 - Total HF hospitalization
 
-Data were censored at 2019-12-31 or death/move from Stockholm county. DO YOU WANT TO CUT OUTCOMES AT A CERTAIN TIMEPOINT?
+Data were censored at 3 years after index, 2019-12-31 or death/move from Stockholm county. 
 
 ### Association between ID/A and outcomes
 
@@ -196,6 +194,10 @@ presented in EF subgroups using interaction effects.
 Recurrent events were model using a negative binomial model 
 including the log of time as an offset in the model, crude and adjusted as above. 
 
+```{r, child = "../src/outtab_id.Rmd"}
+
+```
+
 ```{r, child = "../src/outtab_idef.Rmd"}
 
 ```
@@ -213,7 +215,7 @@ sessionInfo()
 ## R code
 
 The R code for all data handling and statistical analyses are found: 
-https://github.com/KIHeartFailure/xx. On publication
+https://github.com/KIHeartFailure/screamiron. On publication
 the repository will be made public so as to 
 link to it from the resulting article for increased transparency and code sharing.
 No data or output is stored in the repository. 

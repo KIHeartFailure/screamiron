@@ -21,5 +21,6 @@ ProjectTemplate::cache("imprsdata")
 
 ProjectTemplate::cache("tabvars")
 ProjectTemplate::cache("modvars")
+ProjectTemplate::cache("nomultmodvars")
 
 ProjectTemplate::cache("meta.variables.Sheet.1")

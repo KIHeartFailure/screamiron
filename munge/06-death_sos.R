@@ -53,10 +53,9 @@ rsdata <- left_join(rsdata,
 
 rsdata <- rsdata %>%
   mutate(
-    censdtm = coalesce(
-      pmin(sos_deathdtm, flyttdtm, na.rm = TRUE),
-      ymd("2019-12-31")
-    ), 
+    censdtm = pmin(sos_deathdtm, flyttdtm, na.rm = TRUE),
+    censdtm = pmin(censdtm, ymd("2019-12-31"), na.rm = TRUE),
+    censdtm = pmin(censdtm, shf_indexdtm + 365 * 3, na.rm = TRUE),
     sos_out_death = factor(if_else(censdtm == sos_deathdtm & !is.na(sos_deathdtm), 1, 0), 
                            levels = 0:1, 
                            labels = c("No", "Yes")),

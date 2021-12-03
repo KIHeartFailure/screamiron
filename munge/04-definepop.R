@@ -35,7 +35,7 @@ flow <- rbind(flow, c("Exclude posts with with index date > 2018-12-31", nrow(rs
 
 rsdata <- rsdata %>%
   filter(!is.na(shf_ef))
-flow <- rbind(flow, c("Exclude posts with non-missing EF", nrow(rsdata)))
+flow <- rbind(flow, c("Exclude posts with missing EF", nrow(rsdata)))
 
 tmp_rsdataflytt <- inner_join(rsdata %>% select(LopNr, shf_indexdtm),
   flytt %>% mutate(flyttdtm = ymd(hdat)) %>% select(-hdat, -hdat_c),

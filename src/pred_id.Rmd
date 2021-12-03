@@ -1,113 +1,116 @@
-```{r predid, cache=cacheon}
+```{r predfunc, cache=cacheon}
 
-modvarstmp <- modvars[modvars != "scream_id"]
+predfunc <- function(impdata, nomodvars) {
+  modvarstmp <- modvars[!modvars %in% nomodvars]
+  modvarstmpadj <- modvars[!modvars %in% c(nomodvars, nomultmodvars)]
+  
+  # mult
 
-ormod <- with(imprsdata, glm(formula(paste0("scream_id == 'Yes' ~ ", paste(modvarstmp, collapse = " + "))),
-  family = binomial(link = "logit")
-))
+  ormod <- with(impdata, glm(formula(paste0("scream_id == 'Yes' ~ ", paste(modvarstmpadj, collapse = " + "))),
+    family = binomial(link = "logit")
+  ))
 
-sormod <- summary(pool(ormod))
+  sormod <- summary(pool(ormod))
 
-nval <- length(sormod$term)
-preds <- bind_cols(
-  Variable = as.character(sormod$term[2:nval]),
-  logor = sormod$estimate[2:nval],
-  lci = sormod$estimate[2:nval] - global_z05 * sormod$std.error[2:nval],
-  uci = sormod$estimate[2:nval] + global_z05 * sormod$std.error[2:nval],
-  p = fn(sormod$p.value[2:nval], dig = 3, p = TRUE)
-) %>%
-  mutate(orci = paste0(fn(exp(logor), 2), " (", fn(exp(lci), 2), "-", fn(exp(uci), 2), ")")) %>%
-  select(Variable, orci, p)
+  nval <- length(sormod$term)
+  preds <- bind_cols(
+    Variable = as.character(sormod$term[2:nval]),
+    logor = sormod$estimate[2:nval],
+    lci = sormod$estimate[2:nval] - global_z05 * sormod$std.error[2:nval],
+    uci = sormod$estimate[2:nval] + global_z05 * sormod$std.error[2:nval],
+    p = fn(sormod$p.value[2:nval], dig = 3, p = TRUE)
+  ) %>%
+    mutate(orci = paste0(fn(exp(logor), 2), " (", fn(exp(lci), 2), "-", fn(exp(uci), 2), ")")) %>%
+    select(Variable, orci, p)
 
-colnames(preds) <- c("Variable", "OR (95% CI)", "p-value")
+  # crude
+  for (i in seq_along(modvarstmp)) {
+    ormoduni <- with(impdata, glm(formula(paste0("scream_id == 'Yes' ~ ", modvarstmp[i])),
+      family = binomial(link = "logit")
+    ))
 
-write.xlsx(preds, paste0("./output/tabs/predoverall_", Sys.Date(), ".xlsx"), rowNames = FALSE, overwrite = TRUE)
+    sormoduni <- summary(pool(ormoduni))
 
-default_kable(preds,
+    nval <- length(sormoduni$term)
+    predsunitmp <- bind_cols(
+      Variable = as.character(sormoduni$term[2:nval]),
+      logor = sormoduni$estimate[2:nval],
+      lci = sormoduni$estimate[2:nval] - global_z05 * sormoduni$std.error[2:nval],
+      uci = sormoduni$estimate[2:nval] + global_z05 * sormoduni$std.error[2:nval],
+      p = fn(sormoduni$p.value[2:nval], dig = 3, p = TRUE)
+    ) %>%
+      mutate(orci = paste0(fn(exp(logor), 2), " (", fn(exp(lci), 2), "-", fn(exp(uci), 2), ")")) %>%
+      select(Variable, orci, p)
+
+    if (i == 1) {
+      predsuni <<- predsunitmp
+    } else {
+      predsuni <<- bind_rows(predsuni, predsunitmp)
+    }
+  }
+
+  predall <- full_join(predsuni, preds, by = "Variable")
+  colnames(predall) <- c("Variable", rep(c("OR (95% CI)", "p-value"), 2))
+  return(predall)
+}
+```
+
+```{r predid, cache=cacheon, dependson="predfunc"}
+
+predoverall <- predfunc(impdata = imprsdata, nomodvars = "scream_id")
+
+write.xlsx(predoverall, paste0("./output/tabs/predidoverall_", Sys.Date(), ".xlsx"), rowNames = FALSE, overwrite = TRUE)
+
+default_kable(predoverall,
   font_size = 6,
   caption = "Predictors of ID - overall",
   longtable = TRUE,
   escape = TRUE
-)
+) %>%
+  add_header_above(c(" " = 1, "Crude" = 2, "Adjusted" = 2))
 ```
 
 \clearpage
 
-```{r predidef, cache=cacheon}
-
-modvarstmp <- modvars[!modvars %in% c("shf_ef_cat", "scream_id")]
+```{r predidef, cache=cacheon, dependson="predfunc"}
 
 # ref
-imp <- miceadds::subset_datlist(imprsdata, subset = c(rsdata$shf_ef_cat == "HFrEF"))
-ormod <- with(imp, glm(formula(paste0("scream_id == 'Yes' ~ ", paste(modvarstmp, collapse = " + "))),
-  family = binomial(link = "logit")
-))
-sormod <- summary(pool(ormod))
-nval <- length(sormod$term)
-predsref <- bind_cols(
-  Variable = as.character(sormod$term[2:nval]),
-  logor = sormod$estimate[2:nval],
-  lci = sormod$estimate[2:nval] - global_z05 * sormod$std.error[2:nval],
-  uci = sormod$estimate[2:nval] + global_z05 * sormod$std.error[2:nval],
-  p = fn(sormod$p.value[2:nval], dig = 3, p = TRUE)
-) %>%
-  mutate(orci = paste0(fn(exp(logor), 2), " (", fn(exp(lci), 2), "-", fn(exp(uci), 2), ")")) %>%
-  select(Variable, orci, p)
+impref <- miceadds::subset_datlist(imprsdata, subset = c(rsdata$shf_ef_cat == "HFrEF"))
+
+predref <- predfunc(impdata = impref, nomodvars = c("shf_ef_cat", "scream_id"))
 
 # mref
-imp <- miceadds::subset_datlist(imprsdata, subset = c(rsdata$shf_ef_cat == "HFmrEF"))
-ormod <- with(imp, glm(formula(paste0("scream_id == 'Yes' ~ ", paste(modvarstmp, collapse = " + "))),
-  family = binomial(link = "logit")
-))
-sormod <- summary(pool(ormod))
-nval <- length(sormod$term)
-predsmref <- bind_cols(
-  Variable = as.character(sormod$term[2:nval]),
-  logor = sormod$estimate[2:nval],
-  lci = sormod$estimate[2:nval] - global_z05 * sormod$std.error[2:nval],
-  uci = sormod$estimate[2:nval] + global_z05 * sormod$std.error[2:nval],
-  p = fn(sormod$p.value[2:nval], dig = 3, p = TRUE)
-) %>%
-  mutate(orci = paste0(fn(exp(logor), 2), " (", fn(exp(lci), 2), "-", fn(exp(uci), 2), ")")) %>%
-  select(Variable, orci, p)
+impmref <- miceadds::subset_datlist(imprsdata, subset = c(rsdata$shf_ef_cat == "HFmrEF"))
+
+predmref <- predfunc(impdata = impmref, nomodvars = c("shf_ef_cat", "scream_id"))
 
 # pef
-imp <- miceadds::subset_datlist(imprsdata, subset = c(rsdata$shf_ef_cat == "HFpEF"))
-ormod <- with(imp, glm(formula(paste0("scream_id == 'Yes' ~ ", paste(modvarstmp, collapse = " + "))),
-  family = binomial(link = "logit")
-))
-sormod <- summary(pool(ormod))
-nval <- length(sormod$term)
-predspef <- bind_cols(
-  Variable = as.character(sormod$term[2:nval]),
-  logor = sormod$estimate[2:nval],
-  lci = sormod$estimate[2:nval] - global_z05 * sormod$std.error[2:nval],
-  uci = sormod$estimate[2:nval] + global_z05 * sormod$std.error[2:nval],
-  p = fn(sormod$p.value[2:nval], dig = 3, p = TRUE)
-) %>%
-  mutate(orci = paste0(fn(exp(logor), 2), " (", fn(exp(lci), 2), "-", fn(exp(uci), 2), ")")) %>%
-  select(Variable, orci, p)
+imppef <- miceadds::subset_datlist(imprsdata, subset = c(rsdata$shf_ef_cat == "HFpEF"))
 
+predpef <- predfunc(impdata = imppef, nomodvars = c("shf_ef_cat", "scream_id"))
 
-preds <- bind_cols(predsref, predsmref[2:3], predspef[2:3])
+predef <- bind_cols(predref, predmref[2:5], predpef[2:5])
 
-colnames(preds) <- c("Variable", rep(c("OR (95% CI)", "p-value"), 3))
+colnames(predef) <- c("Variable", rep(c("OR (95% CI)", "p-value"), 6))
 
-write.xlsx(preds, paste0("./output/tabs/predef_", Sys.Date(), ".xlsx"), rowNames = FALSE, overwrite = TRUE)
+write.xlsx(predef, paste0("./output/tabs/predidef_", Sys.Date(), ".xlsx"), rowNames = FALSE, overwrite = TRUE)
 
-default_kable(preds,
-  font_size = 6,
+default_kable(predef,
+  font_size = 4,
   caption = "Predictors of ID by EF",
   longtable = TRUE,
   escape = TRUE
-) %>% add_header_above(c(" " = 1, "HFrEF" = 2, "HFmrEF" = 2, "HFpEF" = 2))
+) %>%
+  add_header_above(c(" " = 1, "Crude" = 2, "Adjusted" = 2, "Crude" = 2, "Adjusted" = 2, "Crude" = 2, "Adjusted" = 2)) %>%
+  add_header_above(c(" " = 1, "HFrEF" = 4, "HFmrEF" = 4, "HFpEF" = 4)) %>%
+  landscape()
 ```
 
 \clearpage
 
 ```{r predidefint, cache=cacheon}
 
-modvarstmp <- modvars[!modvars %in% c("shf_ef_cat", "scream_id")]
+modvarstmp <- modvars[!modvars %in% c("shf_ef_cat", "scream_id", nomultmodvars)]
 
 # interactions
 ormodnoint <- with(imprsdata, glm(formula(paste0("scream_id == 'Yes' ~ ", paste(modvarstmp, collapse = " + "))),
@@ -125,9 +128,9 @@ for (i in seq_along(modvarstmp)) {
   p[i, 2] <- fn(int$result[4], dig = 3, p = TRUE)
 }
 
-colnames(p) <-  c("Variable", "p-value for interaction")
+colnames(p) <- c("Variable", "p-value for interaction")
 
-write.xlsx(p, paste0("./output/tabs/predpinteraction_", Sys.Date(), ".xlsx"), rowNames = FALSE, overwrite = TRUE)
+write.xlsx(p, paste0("./output/tabs/predidpinteraction_", Sys.Date(), ".xlsx"), rowNames = FALSE, overwrite = TRUE)
 
 default_kable(p,
   font_size = 6,

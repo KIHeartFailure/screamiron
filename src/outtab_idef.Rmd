@@ -45,7 +45,7 @@ survfunc <- function(time, event, eventname, rep = FALSE) {
     fn(r$upper, dig = 1), ")"
   )
 
-  modvarstmp <- modvars[!modvars %in% c("scream_id", "scream_anemia", "shf_ef_cat")]
+  modvarstmp <- modvars[!modvars %in% c("scream_id", "shf_ef_cat")]
   if (!rep) {
     # cox regressions
     ## crude
@@ -190,7 +190,7 @@ outall <- rbind(
   s1, s2, s3, s4, s5
 )
 
-write.xlsx(outall, paste0("./output/tabs/out_", Sys.Date(), ".xlsx"), rowNames = FALSE, overwrite = TRUE)
+write.xlsx(outall, paste0("./output/tabs/out_idef_", Sys.Date(), ".xlsx"), rowNames = FALSE, overwrite = TRUE)
 
 colnames(outall) <- c("Outcome", "Model", rep(c("No ID", "ID"), 3), "p interaction")
 

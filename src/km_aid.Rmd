@@ -21,7 +21,7 @@ kmfunc <- function(data, time, event, eventcr = NULL, eventname, yposplus = rep(
       ylab = eventname,
       col = global_kicols,
       wh = c(1110, 1110),
-      xlim = c(0, 5 * 365),
+      xlim = c(0, 3 * 365),
       ylim = c(0, 1),
       xlab = "Years",
       cex.lab = cexmy,
@@ -41,7 +41,7 @@ kmfunc <- function(data, time, event, eventcr = NULL, eventname, yposplus = rep(
       col = global_kicols,
       mark.time = FALSE,
       bty = "n",
-      xlim = c(0, 5 * 365),
+      xlim = c(0, 3 * 365),
       ylim = c(0, 1),
       xlab = "Years",
       cex.lab = cexmy,
@@ -53,12 +53,12 @@ kmfunc <- function(data, time, event, eventcr = NULL, eventname, yposplus = rep(
   }
 
   axis(2, seq(0, 1, 0.25), seq(0, 100, 25), las = 2, cex.axis = cexmy)
-  axis(1, at = seq(0, 5, 1) * 365, seq(0, 5, 1), cex.axis = cexmy)
+  axis(1, at = seq(0, 3, 1) * 365, seq(0, 3, 1), cex.axis = cexmy)
 
   if (!is.null(eventcr)) {
-    ypos <- timepoints(fit[1:4], 364.5 * 5)$est
+    ypos <- timepoints(fit[1:4], 364.5 * 3)$est
   } else {
-    ypos <- 1 - summary(fits, 364.5 * 5)$surv
+    ypos <- 1 - summary(fits, 364.5 * 3)$surv
   }
 
   ylabs <- bind_cols(
@@ -82,12 +82,12 @@ kmfunc <- function(data, time, event, eventcr = NULL, eventname, yposplus = rep(
   mtext("A+/ID+", side = 1, line = 7.5, at = -540, adj = 0, cex = cexmy)
 
 
-  nrisk <- summary(fits, seq(0, 5, 1) * 365, extend = T)
+  nrisk <- summary(fits, seq(0, 3, 1) * 365, extend = T)
 
-  axis(1, at = seq(0, 5, 1) * 365, labels = nrisk$n.risk[nrisk$strata == "scream_aid=A-/ID-"], line = 3.5, tick = FALSE, cex.axis = cexmy)
-  axis(1, at = seq(0, 5, 1) * 365, labels = nrisk$n.risk[nrisk$strata == "scream_aid=A+/ID-"], line = 4.5, tick = FALSE, cex.axis = cexmy)
-  axis(1, at = seq(0, 5, 1) * 365, labels = nrisk$n.risk[nrisk$strata == "scream_aid=A-/ID+"], line = 5.5, tick = FALSE, cex.axis = cexmy)
-  axis(1, at = seq(0, 5, 1) * 365, labels = nrisk$n.risk[nrisk$strata == "scream_aid=A+/ID+"], line = 6.5, tick = FALSE, cex.axis = cexmy)
+  axis(1, at = seq(0, 3, 1) * 365, labels = nrisk$n.risk[nrisk$strata == "scream_aid=A-/ID-"], line = 3.5, tick = FALSE, cex.axis = cexmy)
+  axis(1, at = seq(0, 3, 1) * 365, labels = nrisk$n.risk[nrisk$strata == "scream_aid=A+/ID-"], line = 4.5, tick = FALSE, cex.axis = cexmy)
+  axis(1, at = seq(0, 3, 1) * 365, labels = nrisk$n.risk[nrisk$strata == "scream_aid=A-/ID+"], line = 5.5, tick = FALSE, cex.axis = cexmy)
+  axis(1, at = seq(0, 3, 1) * 365, labels = nrisk$n.risk[nrisk$strata == "scream_aid=A+/ID+"], line = 6.5, tick = FALSE, cex.axis = cexmy)
 }
 ```
 
@@ -110,7 +110,7 @@ mcffunc <- function(data, datarec, event, eventname, yposplus = rep(0, 2)) {
     type = "l",
     ylab = eventname,
     col = global_kicols[1],
-    xlim = c(0, 5 * 365),
+    xlim = c(0, 3 * 365),
     ylim = c(0, 3),
     xlab = "Years",
     cex.lab = cexmy,
@@ -142,14 +142,14 @@ mcffunc <- function(data, datarec, event, eventname, yposplus = rep(0, 2)) {
   )
 
   axis(2, seq(0, 3, 1), seq(0, 300, 100), las = 2, cex.axis = cexmy)
-  axis(1, at = seq(0, 5, 1) * 365, seq(0, 5, 1), cex.axis = cexmy)
+  axis(1, at = seq(0, 3, 1) * 365, seq(0, 3, 1), cex.axis = cexmy)
 
   # all no, all yes, no match
   ypos <- c(
-    last(fits@MCF$MCF[fits@MCF$time <= 365 * 5 & fits@MCF$scream_aid == "A-/ID-"]),
-    last(fits@MCF$MCF[fits@MCF$time <= 365 * 5 & fits@MCF$scream_aid == "A+/ID-"]),
-    last(fits@MCF$MCF[fits@MCF$time <= 365 * 5 & fits@MCF$scream_aid == "A-/ID+"]),
-    last(fits@MCF$MCF[fits@MCF$time <= 365 * 5 & fits@MCF$scream_aid == "A+/ID+"])
+    last(fits@MCF$MCF[fits@MCF$time <= 365 * 3 & fits@MCF$scream_aid == "A-/ID-"]),
+    last(fits@MCF$MCF[fits@MCF$time <= 365 * 3 & fits@MCF$scream_aid == "A+/ID-"]),
+    last(fits@MCF$MCF[fits@MCF$time <= 365 * 3 & fits@MCF$scream_aid == "A-/ID+"]),
+    last(fits@MCF$MCF[fits@MCF$time <= 365 * 3 & fits@MCF$scream_aid == "A+/ID+"])
   )
 
   ylabs <- bind_cols(
@@ -172,12 +172,12 @@ mcffunc <- function(data, datarec, event, eventname, yposplus = rep(0, 2)) {
   mtext("A-/ID+", side = 1, line = 6.5, at = -540, adj = 0, cex = cexmy)
   mtext("A+/ID+", side = 1, line = 7.5, at = -540, adj = 0, cex = cexmy)
 
-  nrisk <- summary(fitsn, seq(0, 5, 1) * 365, extend = T)
+  nrisk <- summary(fitsn, seq(0, 3, 1) * 365, extend = T)
 
-  axis(1, at = seq(0, 5, 1) * 365, labels = nrisk$n.risk[nrisk$strata == "scream_aid=A-/ID-"], line = 3.5, tick = FALSE, cex.axis = cexmy)
-  axis(1, at = seq(0, 5, 1) * 365, labels = nrisk$n.risk[nrisk$strata == "scream_aid=A+/ID-"], line = 4.5, tick = FALSE, cex.axis = cexmy)
-  axis(1, at = seq(0, 5, 1) * 365, labels = nrisk$n.risk[nrisk$strata == "scream_aid=A-/ID+"], line = 5.5, tick = FALSE, cex.axis = cexmy)
-  axis(1, at = seq(0, 5, 1) * 365, labels = nrisk$n.risk[nrisk$strata == "scream_aid=A+/ID+"], line = 6.5, tick = FALSE, cex.axis = cexmy)
+  axis(1, at = seq(0, 3, 1) * 365, labels = nrisk$n.risk[nrisk$strata == "scream_aid=A-/ID-"], line = 3.5, tick = FALSE, cex.axis = cexmy)
+  axis(1, at = seq(0, 3, 1) * 365, labels = nrisk$n.risk[nrisk$strata == "scream_aid=A+/ID-"], line = 4.5, tick = FALSE, cex.axis = cexmy)
+  axis(1, at = seq(0, 3, 1) * 365, labels = nrisk$n.risk[nrisk$strata == "scream_aid=A-/ID+"], line = 5.5, tick = FALSE, cex.axis = cexmy)
+  axis(1, at = seq(0, 3, 1) * 365, labels = nrisk$n.risk[nrisk$strata == "scream_aid=A+/ID+"], line = 6.5, tick = FALSE, cex.axis = cexmy)
 }
 ```
 

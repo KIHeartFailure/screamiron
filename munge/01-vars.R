@@ -36,6 +36,7 @@ tabvars <- c(
   "shf_bmi",
   "shf_bmi_cat",
   "scream_sodium",
+  "scream_sodium_cat",
   "scream_potassium",
   "scream_potassium_cat",
   "scream_gfrckdepi",
@@ -72,6 +73,7 @@ tabvars <- c(
   "shf_statin",
   "shf_nitrate",
   "shf_ferrocarboxymaltosis",
+  "ddr_ironoralsupp",
 
   # organizational
   "shf_followuphfunit",
@@ -79,8 +81,8 @@ tabvars <- c(
 
   # socec
   "scb_fam",
-  "scb_education",
-  "scb_dispincome_cat"
+  "scb_education_cat",
+  "scb_dispincome_cat2"
 )
 
 tabvars_not_in_mod <- c(
@@ -97,6 +99,7 @@ tabvars_not_in_mod <- c(
   "scream_transferrin_cat",
   
   "shf_ferrocarboxymaltosis",
+  "ddr_ironoralsupp",
   
   "shf_nyha",
   "shf_map",
@@ -105,6 +108,7 @@ tabvars_not_in_mod <- c(
   "shf_heartrate",
   "shf_bmi",
   "shf_hb",
+  "scream_sodium",
   "scream_potassium",
   "scream_gfrckdepi",
   "scream_ntprobnp", 
@@ -114,3 +118,5 @@ tabvars_not_in_mod <- c(
 )
 
 modvars <- tabvars[!(tabvars %in% tabvars_not_in_mod)]
+
+nomultmodvars <- c("sos_com_dementia", "shf_sos_com_hypertension")
