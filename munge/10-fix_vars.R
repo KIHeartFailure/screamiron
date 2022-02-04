@@ -55,7 +55,7 @@ rsdata <- rsdata %>%
       scream_transferrin < 20 ~ 2,
       TRUE ~ 1
     ), levels = 1:2, labels = c(">=20", "<20")),
-    iron_need = case_when(
+    iron_need = factor(case_when(
       is.na(shf_weight) | is.na(scream_hb) ~ NA_real_,
       shf_weight >= 35 & shf_weight <= 70 & scream_hb < 100 ~ 1500,
       shf_weight >= 35 & shf_weight <= 70 & scream_hb >= 100 & scream_hb < 140 ~ 1000,
@@ -63,7 +63,21 @@ rsdata <- rsdata %>%
       shf_weight > 70 & scream_hb < 100 ~ 2000,
       shf_weight > 70 & scream_hb >= 100 & scream_hb < 140 ~ 1500,
       shf_weight > 70 & scream_hb >= 140 & scream_hb <= 150 ~ 500
-    ),
+    )),
+    
+    shf_ferrocarboxymaltosisdose = factor(shf_ferrocarboxymaltosisdose),
+    
+    shf_ferrocarboxymaltosis_priorinc2016 = if_else(shf_indexyear <= 2016, shf_ferrocarboxymaltosis, factor(NA_character_)),
+    shf_ferrocarboxymaltosis_postinc2017 = if_else(shf_indexyear >= 2017, shf_ferrocarboxymaltosis, factor(NA_character_)),
+    
+    ddr_ironoralsupp_priorinc2016 = if_else(shf_indexyear <= 2016, ddr_ironoralsupp, factor(NA_character_)),
+    ddr_ironoralsupp_postinc2017 = if_else(shf_indexyear >= 2017, ddr_ironoralsupp, factor(NA_character_)),
+    
+    fcm_ironoral = factor(case_when(is.na(shf_ferrocarboxymaltosis) | is.na(ddr_ironoralsupp) ~ NA_real_, 
+                             shf_ferrocarboxymaltosis == "Yes" | ddr_ironoralsupp == "Yes" ~ 1, 
+                             TRUE ~ 0), levels = 0:1, labels = c("No", "Yes")),
+    
+    fcm_ironoral_postinc2017 = if_else(shf_indexyear >= 2017, fcm_ironoral, factor(NA_character_)),
 
     ## lab follow-up
     ### 6 mo
@@ -139,7 +153,12 @@ rsdata <- rsdata %>%
     ),
     shf_indexyear_cat = case_when(
       shf_indexyear <= 2010 ~ "2006-2010",
-      shf_indexyear <= 2018 ~ "2011-2018"
+      shf_indexyear <= 2016 ~ "2011-2016",
+      shf_indexyear <= 2018 ~ "2017-2018"
+    ),
+    shf_indexyear_cat2 = case_when(
+      shf_indexyear <= 2016 ~ "2006-2016",
+      shf_indexyear <= 2018 ~ "2017-2018"
     ),
     shf_nyha_cat = case_when(
       shf_nyha %in% c("I", "II") ~ "I - II",
@@ -178,7 +197,6 @@ rsdata <- rsdata %>%
       labels = c("normakalemia", "hypokalemia", "hyperkalemia"),
       levels = 1:3
     ),
-    
     scream_sodium_cat = factor(
       case_when(
         is.na(scream_sodium) ~ NA_real_,
@@ -188,7 +206,6 @@ rsdata <- rsdata %>%
       labels = c("<=135", ">135"),
       levels = 1:2
     ),
-    
     shf_heartrate_cat = case_when(
       shf_heartrate <= 70 ~ "<=70",
       shf_heartrate > 70 ~ ">70"
@@ -251,10 +268,10 @@ rsdata <- rsdata %>%
     shf_followuplocation_cat = if_else(shf_followuplocation %in% c("Primary care", "Other"), "Primary care/Other",
       as.character(shf_followuplocation)
     ),
-    
-    scb_education_cat = case_when(scb_education %in% c("Compulsory school", "Secondary school") ~ "No university", 
-                                  scb_education %in% c("University") ~ "University" 
-                                  ), 
+    scb_education_cat = case_when(
+      scb_education %in% c("Compulsory school", "Secondary school") ~ "No university",
+      scb_education %in% c("University") ~ "University"
+    ),
 
     ## Outomes
     ### combined outcomes
@@ -303,8 +320,8 @@ inc <- rsdata %>%
   group_by(shf_indexyear) %>%
   summarise(
     incmed = quantile(scb_dispincome,
-                     probs = 0.5,
-                     na.rm = TRUE
+      probs = 0.5,
+      na.rm = TRUE
     ),
     .groups = "drop_last"
   )
@@ -320,11 +337,17 @@ rsdata <- left_join(
       scb_dispincome >= incmed ~ 2
     ),
     scb_dispincome_cat2 = factor(scb_dispincome_cat2,
-                                 levels = 1:2,
-                                 labels = c("Below medium", "Above medium")
+      levels = 1:2,
+      labels = c("Below medium", "Above medium")
     )
   ) %>%
   select(-incmed)
 
 rsdata <- rsdata %>%
   mutate(across(where(is_character), factor))
+
+
+# Create data with hb, ferritin and transferrin at index ------------------
+
+rsdatalab <- rsdata %>% 
+  filter(hbtfindex == 1)

@@ -1,6 +1,6 @@
 ```{r tabfollow, cache=cacheon}
 
-tabfollowfunc <- function(data, stratavar, tabname) {
+tabfollowfunc <- function(data, stratavar, tabname, xlsname) {
   tabfollow <- print(CreateTableOne(
     vars = c(
       "scream_anemia6mo", "scream_id6mo", "scream_aid6mo",
@@ -18,8 +18,10 @@ tabfollowfunc <- function(data, stratavar, tabname) {
   )
 
   tabfollow <- as_tibble(cbind(Variable = rownames(tabfollow), tabfollow)) %>%
-    select(Variable, Missing, everything()) %>%
-    mutate(Variable = Variable)
+    select(Variable, Missing, everything())
+  
+  write.xlsx(tabfollow, paste0("./output/tabs/tabfollow_", xlsname, "_", Sys.Date(), ".xlsx"), rowNames = FALSE, overwrite = TRUE)
+
 
   default_kable(tabfollow,
     font_size = 6,
@@ -32,33 +34,33 @@ tabfollowfunc <- function(data, stratavar, tabname) {
 
 
 ```{r tabfollowaid, cache=cacheon, dependson="tabfollow"}
-tabfollowfunc(data = rsdata, stratavar = "scream_aid", "by ID/A")
+tabfollowfunc(data = rsdatalab, stratavar = "scream_aid", "by ID/A", xlsname = "ida")
 ```
 
 ```{r tabfollowaidref, cache=cacheon, dependson="tabfollow"}
-tabfollowfunc(rsdata %>% filter(shf_ef_cat == "HFrEF"), "scream_aid", "by ID/A - HFrEF")
+tabfollowfunc(rsdatalab %>% filter(shf_ef_cat == "HFrEF"), "scream_aid", "by ID/A - HFrEF", xlsname = "ida_ref")
 ```
 
 ```{r tabfollowaidmref, cache=cacheon, dependson="tabfollow"}
-tabfollowfunc(rsdata %>% filter(shf_ef_cat == "HFmrEF"), "scream_aid", "by ID/A - HFmrEF")
+tabfollowfunc(rsdatalab %>% filter(shf_ef_cat == "HFmrEF"), "scream_aid", "by ID/A - HFmrEF", xlsname = "ida_mref")
 ```
 
 ```{r tabfollowaidpef, cache=cacheon, dependson="tabfollow"}
-tabfollowfunc(rsdata %>% filter(shf_ef_cat == "HFpEF"), "scream_aid", "by ID/A - HFpEF")
+tabfollowfunc(rsdatalab %>% filter(shf_ef_cat == "HFpEF"), "scream_aid", "by ID/A - HFpEF", xlsname = "ida_pef")
 ```
 
 ```{r tabfollowid, cache=cacheon, dependson="tabfollow"}
-tabfollowfunc(rsdata, "scream_id", "by ID")
+tabfollowfunc(rsdatalab, "scream_id", "by ID", xlsname = "id")
 ```
 
 ```{r tabfollowidref, cache=cacheon, dependson="tabfollow"}
-tabfollowfunc(rsdata %>% filter(shf_ef_cat == "HFrEF"), "scream_id", "by ID - HFrEF")
+tabfollowfunc(rsdatalab %>% filter(shf_ef_cat == "HFrEF"), "scream_id", "by ID - HFrEF", xlsname = "id_ref")
 ```
 
 ```{r tabfollowidmref, cache=cacheon, dependson="tabfollow"}
-tabfollowfunc(rsdata %>% filter(shf_ef_cat == "HFmrEF"), "scream_id", "by ID - HFmrEF")
+tabfollowfunc(rsdatalab %>% filter(shf_ef_cat == "HFmrEF"), "scream_id", "by ID - HFmrEF", xlsname = "id_mref")
 ```
 
 ```{r tabfollowidpef, cache=cacheon, dependson="tabfollow"}
-tabfollowfunc(rsdata %>% filter(shf_ef_cat == "HFpEF"), "scream_id", "by ID - HFpEF")
+tabfollowfunc(rsdatalab %>% filter(shf_ef_cat == "HFpEF"), "scream_id", "by ID - HFpEF", xlsname = "id_pef")
 ```

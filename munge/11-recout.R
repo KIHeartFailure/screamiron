@@ -4,7 +4,7 @@
 svpatreg <- patreg %>%
   filter(sos_source == "sv")
 
-svpatregrsdata <- left_join(rsdata %>%
+svpatregrsdata <- left_join(rsdatalab %>%
   select(LopNr, shf_indexdtm, starts_with("scream_"), sos_outtime_death, sos_out_death, censdtm),
 svpatreg,
 by = "LopNr"
@@ -17,8 +17,8 @@ tmpsos <- svpatregrsdata %>%
   filter(sos_out) %>%
   select(LopNr, shf_indexdtm, starts_with("scream_"), sos_outtime_death, sos_out_death, censdtm, sos_outtime, sos_out)
 
-rsdata_rec_hosphf <- bind_rows(
-  rsdata %>%
+rsdatalab_rec_hosphf <- bind_rows(
+  rsdatalab %>%
     select(LopNr, shf_indexdtm, starts_with("scream_"), sos_outtime_death, sos_out_death, censdtm),
   tmpsos
 ) %>%
@@ -27,7 +27,7 @@ rsdata_rec_hosphf <- bind_rows(
     sos_outtime = if_else(is.na(sos_outtime), difftime(censdtm, shf_indexdtm, units = "days"), sos_outtime)
   )
 
-rsdata_rec_hosphf <- rsdata_rec_hosphf %>%
+rsdatalab_rec_hosphf <- rsdatalab_rec_hosphf %>%
   group_by(LopNr, shf_indexdtm, sos_outtime) %>%
   arrange(desc(sos_out)) %>%
   slice(1) %>%

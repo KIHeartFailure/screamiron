@@ -3,13 +3,13 @@ survfunc <- function(time, event, eventcr = NULL, eventname, rep = FALSE) {
   out <- data.frame(matrix(NA, ncol = 4, nrow = ifelse(is.null(eventcr), 3, 4)))
 
   out[1, 1] <- eventname
-  colnames(out) <- c("Outcome", "Model", levels(rsdata$scream_id))
+  colnames(out) <- c("Outcome", "Model", levels(rsdatalab$scream_id))
 
   ## incidence rate
   out[1, 2] <- "No events, sum py, incidence rate/100py (95% CI)"
 
   if (!rep) {
-    ev <- rsdata %>%
+    ev <- rsdatalab %>%
       group_by(scream_id) %>%
       summarise(
         ev = sum(!!sym(event) == "Yes"),
@@ -17,14 +17,14 @@ survfunc <- function(time, event, eventcr = NULL, eventname, rep = FALSE) {
       )
   }
   if (rep) {
-    ev <- rsdata %>%
+    ev <- rsdatalab %>%
       group_by(scream_id) %>%
       summarise(
         ev = sum(!!sym(event)),
         .groups = "rowwise"
       )
   }
-  s <- rsdata %>%
+  s <- rsdatalab %>%
     group_by(scream_id) %>%
     summarise(
       s = sum(!!sym(time) / 365.25),
@@ -48,7 +48,7 @@ survfunc <- function(time, event, eventcr = NULL, eventname, rep = FALSE) {
 
     ## crude
     mod <- summary(coxph(formula(paste0("Surv(", time, ",", event, "=='Yes') ~ scream_id")),
-      data = rsdata
+      data = rsdatalab
     ))
 
     out[2, 3:4] <- c("ref", paste0(
@@ -61,7 +61,7 @@ survfunc <- function(time, event, eventcr = NULL, eventname, rep = FALSE) {
     ## adjusted covs
     out[3, 2] <- "Adjusted HR (95% CI), p-value"
 
-    amod <- with(imprsdata, coxph(formula(paste0(
+    amod <- with(imprsdatalab, coxph(formula(paste0(
       "Surv(", time, ",", event, " == 'Yes') ~ scream_id +",
       paste(modvars, collapse = " + ")
     ))))
@@ -83,15 +83,15 @@ survfunc <- function(time, event, eventcr = NULL, eventname, rep = FALSE) {
     if (!is.null(eventcr)) {
       out[4, 2] <- "Adjusted, death as competing event, HR (95% CI), p-value"
 
-      nams <- names(mice::complete(imprsdata, 1))
+      nams <- names(mice::complete(imprsdatalab, 1))
       modvarscr <- nams[str_detect(nams, "_cr_")]
       modvarscr <- modvarscr[!modvarscr %in% c("scream_id_cr_Yes", "scream_aid_cr_ApIDm", "scream_aid_cr_AmIDp", "scream_aid_cr_ApIDp")]
 
       mod <- crr_mids_hf(
         event = eventcr,
         time = time,
-        xvars = modvarscr,
-        data = imprsdata,
+        xvars = c("scream_id_cr_Yes", modvarscr),
+        data = imprsdatalab,
       )
 
       smod <- summary(pool(mod))
@@ -108,7 +108,7 @@ survfunc <- function(time, event, eventcr = NULL, eventname, rep = FALSE) {
     # neg binomial regression
     ## crude
     mod <- glm.nb(formula(paste0(event, " ~ scream_aid + offset(log(", time, "))")),
-      data = rsdata
+      data = rsdatalab
     )
 
     smod <- summary(mod)
@@ -121,7 +121,7 @@ survfunc <- function(time, event, eventcr = NULL, eventname, rep = FALSE) {
     ))
 
     ## adjusted individual covariates
-    amod <- with(imprsdata, glm.nb(formula(paste0(
+    amod <- with(imprsdatalab, glm.nb(formula(paste0(
       event, " ~ scream_aid + offset(log(", time, ")) +",
       paste(modvarstmp, collapse = " + ")
     ))))

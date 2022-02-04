@@ -2,9 +2,9 @@
 
 # Impute missing values ---------------------------------------------------
 
-noimpvars <- names(rsdata)[!names(rsdata) %in% modvars]
+noimpvars <- names(rsdatalab)[!names(rsdatalab) %in% modvars]
 
-ini <- mice(rsdata, maxit = 0, print = F)
+ini <- mice(rsdatalab, maxit = 0, print = F)
 
 pred <- ini$pred
 pred[, noimpvars] <- 0
@@ -31,17 +31,18 @@ cl <- makeCluster(cores_2_use)
 clusterSetRNGStream(cl, 49956)
 registerDoParallel(cl)
 
-imprsdata <-
+imprsdatalab <-
   foreach(
     no = 1:cores_2_use,
     .combine = ibind,
-    .export = c("meth", "pred", "rsdata"),
+    .export = c("meth", "pred", "rsdatalab"),
     .packages = "mice"
   ) %dopar% {
-    mice(rsdata,
+    mice(rsdatalab,
       m = m_2_use, maxit = 10, method = meth,
       predictorMatrix = pred,
       printFlag = FALSE
     )
   }
 stopImplicitCluster()
+

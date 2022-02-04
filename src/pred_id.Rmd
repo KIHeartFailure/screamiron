@@ -57,7 +57,7 @@ predfunc <- function(impdata, nomodvars) {
 
 ```{r predid, cache=cacheon, dependson="predfunc"}
 
-predoverall <- predfunc(impdata = imprsdata, nomodvars = "scream_id")
+predoverall <- predfunc(impdata = imprsdatalab, nomodvars = "scream_id")
 
 write.xlsx(predoverall, paste0("./output/tabs/predidoverall_", Sys.Date(), ".xlsx"), rowNames = FALSE, overwrite = TRUE)
 
@@ -75,17 +75,17 @@ default_kable(predoverall,
 ```{r predidef, cache=cacheon, dependson="predfunc"}
 
 # ref
-impref <- miceadds::subset_datlist(imprsdata, subset = c(rsdata$shf_ef_cat == "HFrEF"))
+impref <- miceadds::subset_datlist(imprsdatalab, subset = c(rsdatalab$shf_ef_cat == "HFrEF"))
 
 predref <- predfunc(impdata = impref, nomodvars = c("shf_ef_cat", "scream_id"))
 
 # mref
-impmref <- miceadds::subset_datlist(imprsdata, subset = c(rsdata$shf_ef_cat == "HFmrEF"))
+impmref <- miceadds::subset_datlist(imprsdatalab, subset = c(rsdatalab$shf_ef_cat == "HFmrEF"))
 
 predmref <- predfunc(impdata = impmref, nomodvars = c("shf_ef_cat", "scream_id"))
 
 # pef
-imppef <- miceadds::subset_datlist(imprsdata, subset = c(rsdata$shf_ef_cat == "HFpEF"))
+imppef <- miceadds::subset_datlist(imprsdatalab, subset = c(rsdatalab$shf_ef_cat == "HFpEF"))
 
 predpef <- predfunc(impdata = imppef, nomodvars = c("shf_ef_cat", "scream_id"))
 
@@ -113,14 +113,14 @@ default_kable(predef,
 modvarstmp <- modvars[!modvars %in% c("shf_ef_cat", "scream_id", nomultmodvars)]
 
 # interactions
-ormodnoint <- with(imprsdata, glm(formula(paste0("scream_id == 'Yes' ~ ", paste(modvarstmp, collapse = " + "))),
+ormodnoint <- with(imprsdatalab, glm(formula(paste0("scream_id == 'Yes' ~ ", paste(modvarstmp, collapse = " + "))),
   family = binomial(link = "logit")
 ))
 
 p <- tibble(modvarstmp, pint = rep(NA, length(modvarstmp)))
 
 for (i in seq_along(modvarstmp)) {
-  ormodint <- with(imprsdata, glm(formula(paste0("scream_id == 'Yes' ~ shf_ef_cat * ", modvarstmp[i], " + ", paste(modvarstmp, collapse = " + "))),
+  ormodint <- with(imprsdatalab, glm(formula(paste0("scream_id == 'Yes' ~ shf_ef_cat * ", modvarstmp[i], " + ", paste(modvarstmp, collapse = " + "))),
     family = binomial(link = "logit")
   ))
   int <- D1(ormodint, ormodnoint)

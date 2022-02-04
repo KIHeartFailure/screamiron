@@ -55,7 +55,8 @@ labfunc("potas", "potassium")
 
 # Follow-up transferrin/ferritin -------------------------------------------
 
-tmp_rsdatalab <- left_join(rsdata %>% select(LopNr, shf_indexdtm),
+tmp_rsdatalab <- left_join(
+  rsdata %>% select(LopNr, shf_indexdtm),
   lab_avg,
   by = "LopNr"
 ) %>%

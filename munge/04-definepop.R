@@ -60,33 +60,34 @@ flow <- rbind(flow, c("Exclude posts emigrated from Stockholm prior to indexdate
 
 # check lab inclusion criteria
 tmp_rsdatalab <- left_join(rsdata %>% select(LopNr, shf_indexdtm),
-  lab_avg,
-  by = "LopNr"
+                           lab_avg,
+                           by = "LopNr"
 ) %>%
   mutate(diff = as.numeric(shf_indexdtm - labdtm)) %>%
   filter(diff >= 0 & diff < 90 &
-    !is.na(ferritin) &
-    !is.na(transf_sat) &
-    !is.na(hb)) %>%
+           !is.na(ferritin) &
+           !is.na(transf_sat) &
+           !is.na(hb)) %>%
   group_by(LopNr) %>%
   arrange(diff) %>%
   slice(1) %>%
-  ungroup()
+  ungroup() %>%
+  mutate(hbtfindex = 1)
 
 rsdata <- left_join(
-  tmp_rsdatalab %>% select(LopNr, shf_indexdtm),
   rsdata,
+  tmp_rsdatalab %>% select(LopNr, shf_indexdtm, hbtfindex),
   by = c("LopNr", "shf_indexdtm")
 )
 
-flow <- rbind(flow, c("Hb, ferritin, transferrin within 3 months PRIOR to indexdate in SwedeHF (on same date)", nrow(rsdata)))
-
 rsdata <- rsdata %>%
   group_by(LopNr) %>%
-  arrange(shf_indexdtm) %>%
+  arrange(desc(hbtfindex), shf_indexdtm) %>%
   slice(1) %>%
   ungroup()
 
-flow <- rbind(flow, c("First post / patient", nrow(rsdata)))
+flow <- rbind(flow, c("First post with hb, ferritin, transferrin at index / patient* - Full population", nrow(rsdata)))
+
+flow <- rbind(flow, c("Hb, ferritin, transferrin within 3 months PRIOR to indexdate in SwedeHF (on same date) - Iron population", nrow(rsdata %>% filter(hbtfindex == 1))))
 
 colnames(flow) <- c("Criteria", "N")

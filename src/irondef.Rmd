@@ -1,0 +1,51 @@
+```{r irondef, cache=cacheon}
+
+tmp <- left_join(
+  rsdata %>% select(LopNr, shf_indexdtm, censdtm),
+  lab_iron %>% filter(!is.na(ferritin) & !is.na(transf_sat)),
+  by = "LopNr"
+) %>%
+  mutate(diff = as.numeric(labdtm - shf_indexdtm)) %>%
+  filter(diff >= 0 & labdtm <= censdtm) %>%
+  mutate(
+    # iron def
+    id = case_when(
+      ferritin < 100 ~ "Yes",
+      ferritin <= 299 & transf_sat < 20 ~ "Yes",
+      TRUE ~ "No"
+    )
+  )
+
+timelabfunc <- function(time, timename) {
+  tmp2 <- tmp %>%
+    filter(diff <= time) %>%
+    group_by(LopNr) %>%
+    arrange(desc(id)) %>%
+    slice(1) %>%
+    ungroup()
+
+  out <- tmp2 %>%
+    count(id) %>%
+    mutate(
+      time = timename,
+      per = fn(n / sum(n) * 100, 1),
+      nper = paste0(n, " (", per, "%)")
+    ) %>%
+    filter(id == "Yes") %>%
+    select(time, nper)
+}
+
+tab <- timelabfunc(365 / 2, "6 mo")
+tab <- bind_rows(tab, timelabfunc(365, "1 yr"))
+tab <- bind_rows(tab, timelabfunc(365 * 2, "2 yrs"))
+tab <- bind_rows(tab, timelabfunc(365 * 3, "3 yrs"))
+
+colnames(tab) <- c("Time point", "n (%)")
+
+default_kable(tab,
+  font_size = 8,
+  scale_down = F,
+  caption = "Iron deficiency over time",
+  escape = TRUE
+)
+```

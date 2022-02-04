@@ -9,6 +9,7 @@ tabvars <- c(
   "shf_age",
   "shf_age_cat",
   "shf_indexyear_cat",
+  "shf_indexyear_cat2",
   "shf_indexyear",
 
   "iron_need",
@@ -73,6 +74,7 @@ tabvars <- c(
   "shf_statin",
   "shf_nitrate",
   "shf_ferrocarboxymaltosis",
+  "shf_ferrocarboxymaltosisdose",
   "ddr_ironoralsupp",
 
   # organizational
@@ -87,6 +89,7 @@ tabvars <- c(
 
 tabvars_not_in_mod <- c(
   "shf_indexyear",
+  "shf_indexyear_cat2",
   "shf_age",
   
   "iron_need",
@@ -99,7 +102,13 @@ tabvars_not_in_mod <- c(
   "scream_transferrin_cat",
   
   "shf_ferrocarboxymaltosis",
+  "shf_ferrocarboxymaltosis_priorinc2016",
+  "shf_ferrocarboxymaltosis_postinc2017",
+  "shf_ferrocarboxymaltosisdose",
   "ddr_ironoralsupp",
+  "ddr_ironoralsupp_priorinc2016",
+  "ddr_ironoralsupp_postinc2017",
+  "fcm_ironoralpost2017",
   
   "shf_nyha",
   "shf_map",

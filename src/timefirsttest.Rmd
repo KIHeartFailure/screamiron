@@ -1,0 +1,200 @@
+```{r timefirsttestfunc, cache=cacheon}
+
+timelabfunc <- function(labdata, name) {
+  tmp <- left_join(
+    rsdata %>% select(LopNr, shf_indexdtm),
+    labdata,
+    by = "LopNr"
+  ) %>%
+    mutate(diff = as.numeric(labdtm - shf_indexdtm)) %>%
+    filter(diff >= 0) %>%
+    group_by(LopNr) %>%
+    arrange(diff) %>%
+    slice(1) %>%
+    ungroup() %>%
+    select(LopNr, diff)
+
+  rsdata <<- left_join(
+    rsdata,
+    tmp,
+    by = "LopNr"
+  ) %>%
+    mutate(
+      censtime2016 = if_else(shf_indexdtm <= ymd("2016-12-31"),
+        pmin(as.numeric(ymd("2016-12-31") - shf_indexdtm), sos_outtime_death, na.rm = T),
+        sos_outtime_death
+      ),
+      !!sym(paste0("time2016_", name)) := pmin(diff, censtime2016, na.rm = T),
+      !!sym(paste0("event2016_", name)) := case_when(
+        !is.na(diff) & !!sym(paste0("time2016_", name)) == diff ~ "Yes",
+        TRUE ~ "No"
+      ),
+      !!sym(paste0("time_", name)) := pmin(diff, sos_outtime_death, na.rm = T),
+      !!sym(paste0("event_", name)) := case_when(
+        !is.na(diff) & !!sym(paste0("time_", name)) == diff ~ "Yes",
+        TRUE ~ "No"
+      )
+    ) %>%
+    select(-diff, -censtime2016)
+}
+
+timelabfunc(labdata = lab_iron %>% filter(!is.na(hb)), name = "hb")
+timelabfunc(labdata = lab_iron %>% filter(!is.na(ferritin) & !is.na(transf_sat)), name = "ft")
+timelabfunc(labdata = lab_iron %>% filter(!is.na(hb) & !is.na(ferritin) & !is.na(transf_sat)), name = "hbft")
+
+kmlabfunc <- function(lab, labname, posadj = rep(0, 3), endtime = 3) {
+  time <- paste0("time_", lab)
+  event <- paste0("event_", lab)
+  time2016 <- paste0("time2016_", lab)
+  event2016 <- paste0("event2016_", lab)
+
+  cexmy <- 1.2
+  fitall <- survfit(formula(paste0("Surv(", time, ",", event, "=='Yes') ~ 1")),
+    data = rsdata
+  )
+  fit2016 <- survfit(formula(paste0("Surv(", time2016, ",", event2016, "=='Yes') ~ shf_indexyear_cat2")),
+    data = rsdata
+  )
+
+  levs <- c("All", levels(rsdata %>% pull(shf_indexyear_cat2)))
+
+  # c(bottom, left, top, right)
+  par(mar = c(8, 8, 0.5, 5) + 0.1)
+  plots <- plot(fitall,
+    fun = "event",
+    ylab = paste0("Time to first ", labname, " test"),
+    xscale = 365,
+    yscale = 100,
+    col = global_kicols[1],
+    mark.time = FALSE,
+    bty = "n",
+    xlim = c(0, 366 * endtime),
+    ylim = c(0, 1),
+    xlab = "Years",
+    cex.lab = cexmy,
+    axes = F,
+    lwd = 3,
+    lty = 1,
+    xaxs = "i", yaxs = "i",
+    conf.int = F
+  )
+
+  axis(2, seq(0, 1, 0.25), seq(0, 100, 25), las = 2, cex.axis = cexmy)
+  axis(1, at = 0:endtime * 365, labels = 0:endtime, cex.axis = cexmy)
+
+  lines(fit2016, fun = "event", col = global_kicols[2:3], lty = 2:3, lwd = 3)
+
+  yposall <- 1 - summary(fitall, 366 * endtime, extend = T)$surv
+  ypos2016 <- 1 - summary(fit2016, 366 * endtime, extend = T)$surv
+
+  ylabs <- bind_cols(
+    ypos = c(yposall, ypos2016) + posadj,
+    ytext = levs
+  )
+
+  mtext(
+    side = 4,
+    line = .2,
+    at = ylabs$ypos,
+    ylabs$ytext,
+    las = 1,
+    cex = cexmy,
+  )
+
+  mtext("No. at risk", side = 1, line = endtime, at = -275, adj = 0, cex = cexmy, font = 2)
+  mtext(levs[1], side = 1, line = 5, at = -275, adj = 0, cex = cexmy)
+  mtext(levs[2], side = 1, line = 6, at = -275, adj = 0, cex = cexmy)
+  mtext(levs[3], side = 1, line = 7, at = -275, adj = 0, cex = cexmy)
+
+  nriskall <- summary(fitall, seq(0, endtime, 1) * 365, extend = T)
+  nrisk2016 <- summary(fit2016, seq(0, endtime, 1) * 365, extend = T)
+
+  axis(1, at = seq(0, endtime, 1) * 365, labels = nriskall$n.risk, line = 4, tick = FALSE, cex.axis = cexmy)
+  axis(1,
+    at = seq(0, endtime, 1) * 365,
+    labels = nrisk2016$n.risk[nrisk2016$strata == paste0("shf_indexyear_cat2=", levs[2])],
+    line = 5, tick = FALSE, cex.axis = cexmy
+  )
+  axis(1,
+    at = seq(0, endtime, 1) * 365,
+    labels = nrisk2016$n.risk[nrisk2016$strata == paste0("shf_indexyear_cat2=", levs[3])],
+    line = 6, tick = FALSE, cex.axis = cexmy
+  )
+
+  # sfitall <- summary(fitall)$table
+  # sfit2016 <- summary(fit2016)$table
+  # text(1.5 * 365, 0.3, "Median days (95% CI)", font = 2)
+  # text(1.5 * 365, 0.25, paste0(levs[1], ": ", sfitall[7], " (", sfitall[8], "-", sfitall[9], ")"))
+  # text(1.5 * 365, 0.2, paste0(levs[2], ": ", sfit2016[1, 7], " (", sfit2016[1, 8], "-", sfit2016[1, 9], ")"))
+  # text(1.5 * 365, 0.15, paste0(levs[3], ": ", sfit2016[2, 7], " (", sfit2016[2, 8], "-", sfit2016[2, 9], ")"))
+}
+
+kmdslabfunc <- function(lab, labname) {
+  time <- paste0("time_", lab)
+  event <- paste0("event_", lab)
+  time2016 <- paste0("time2016_", lab)
+  event2016 <- paste0("event2016_", lab)
+
+  fitall <- survfit(formula(paste0("Surv(", time, ",", event, "=='Yes') ~ 1")),
+    data = rsdata
+  )
+  fit2016 <- survfit(formula(paste0("Surv(", time2016, ",", event2016, "=='Yes') ~ shf_indexyear_cat2")),
+    data = rsdata
+  )
+
+  levs <- c("All", levels(rsdata %>% pull(shf_indexyear_cat2)))
+
+  sfitall <- summary(fitall, c(365 / 2, 365, 2 * 365, 3 * 365), extend = T)
+  sfit2016 <- summary(fit2016, c(365 / 2, 365, 2 * 365, 3 * 365), extend = T)
+
+  out <- bind_cols(
+    c(labname, rep(NA, 3)),
+    c("6mo", "1yr", "2yrs", "3yrs"),
+    paste0(fn(100 - sfitall$surv * 100, 1), " (", fn(100 - sfitall$upper * 100, 1), "-", fn(100 - sfitall$lower * 100, 1), ")"),
+    paste0(
+      fn(100 - sfit2016$surv * 100, 1),
+      " (", fn(100 - sfit2016$upper * 100, 1),
+      "-",
+      fn(100 - sfit2016$lower * 100, 1), ")"
+    )[1:4],
+    paste0(
+      fn(100 - sfit2016$surv * 100, 1),
+      " (", fn(100 - sfit2016$upper * 100, 1),
+      "-",
+      fn(100 - sfit2016$lower * 100, 1), ")"
+    )[5:8]
+  )
+
+  colnames(out) <- c("Test", "Time point", levs)
+  return(out)
+}
+```
+
+```{r timefirsttesthb, cache=cacheon, dependson="timefirsttestfunc", fig.cap="Time to first HB test", fig.width=8, fig.height=7}
+
+kmlabfunc(lab = "hb", labname = "hb", posadj = c(-0.01, 0.01, 0))
+```
+
+```{r timefirsttestft, cache=cacheon, dependson="timefirsttestfunc", fig.cap="Time to first ferritin & transferrin test", fig.width=8, fig.height=7}
+
+kmlabfunc(lab = "ft", labname = "ferritin & transferrin")
+```
+
+```{r timefirsttesthbft, cache=cacheon, dependson="timefirsttestfunc", fig.cap="Time to first HB, ferritin & transferrin test", fig.width=8, fig.height=7}
+
+kmlabfunc(lab = "hbft", labname = "hb, ferritin & transferrin")
+```
+
+```{r timefirsttesttab, cache=cacheon, dependson="timefirsttestfunc"}
+
+tab <- kmdslabfunc(lab = "hb", labname = "hb")
+tab <- bind_rows(tab, kmdslabfunc(lab = "ft", labname = "ferritin & transferrin"))
+tab <- bind_rows(tab, kmdslabfunc(lab = "hbft", labname = "hb, ferritin & transferrin"))
+
+default_kable(tab,
+  font_size = 6,
+  scale_down = F,
+  caption = "Time to first test (from KM curve)",
+  escape = TRUE
+)
+```

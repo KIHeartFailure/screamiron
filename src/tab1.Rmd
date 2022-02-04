@@ -1,6 +1,6 @@
 ```{r tab1, cache=cacheon}
 
-tab1func <- function(data, stratavar, tabname) {
+tab1func <- function(data, stratavar, tabname, xlsname) {
   tab1 <- print(CreateTableOne(
     vars = tabvars,
     data = data,
@@ -15,6 +15,41 @@ tab1func <- function(data, stratavar, tabname) {
   tab1 <- as_tibble(cbind(var = rownames(tab1), tab1)) %>%
     select(-test) %>%
     select(var, Missing, everything())
+
+  # <= 2016 for iron and fcm
+  tab2016 <- print(CreateTableOne(
+    vars = c("shf_ferrocarboxymaltosis_priorinc2016", "ddr_ironoralsupp_priorinc2016"),
+    data = data %>% filter(shf_indexyear <= 2016),
+    strata = stratavar
+  ),
+  missing = TRUE, printToggle = FALSE, nonnormal = tabvars,
+  catDigits = 1, contDigits = 1,
+  noSpaces = TRUE,
+  explain = FALSE
+  )
+  tab2016 <- as_tibble(cbind(var = rownames(tab2016), tab2016)) %>%
+    select(-test) %>%
+    select(var, Missing, everything()) %>%
+    filter(var != "n")
+
+  # >= 2017 for iron and fcm
+  tab2017 <- print(CreateTableOne(
+    vars = c("shf_ferrocarboxymaltosis_postinc2017", "ddr_ironoralsupp_postinc2017", "fcm_ironoral_postinc2017"),
+    data = data %>% filter(shf_indexyear >= 2017),
+    strata = stratavar
+  ),
+  missing = TRUE, printToggle = FALSE, nonnormal = tabvars,
+  catDigits = 1, contDigits = 1,
+  noSpaces = TRUE,
+  explain = FALSE
+  )
+  tab2017 <- as_tibble(cbind(var = rownames(tab2017), tab2017)) %>%
+    select(-test) %>%
+    select(var, Missing, everything()) %>%
+    filter(var != "n")
+
+  # all together
+  tab1 <- bind_rows(tab1, tab2016, tab2017)
 
   tab1 <- tab1 %>%
     # remove = Yes
@@ -48,18 +83,15 @@ tab1func <- function(data, stratavar, tabname) {
 
 
   write.xlsx(tab1 %>%
-    select(Variable, Missing:p), paste0("./output/tabs/tab1_", tabname, "_", Sys.Date(), ".xlsx"), rowNames = FALSE, overwrite = TRUE)
+    select(Variable, Missing:p), paste0("./output/tabs/tab1_", xlsname, "_", Sys.Date(), ".xlsx"), rowNames = FALSE, overwrite = TRUE)
 
   # footnotes
   tab1 <- tab1 %>%
     mutate(
-      footnote1 = if_else(str_detect(var, "^shf_"), footnote_marker_symbol(1), ""),
-      footnote2 = if_else(str_detect(var, "sos_"), footnote_marker_symbol(2), ""),
-      footnote3 = if_else(str_detect(var, "^scb_"), footnote_marker_symbol(3), ""),
-      footnote4 = if_else(var_tmp %in% modvars, footnote_marker_symbol(4), ""),
-      footnote5 = if_else(str_detect(var, "^shf_rasarni"), footnote_marker_symbol(5), ""),
-      footnote6 = if_else(str_detect(var, "^scb_dispincome_cat"), footnote_marker_symbol(6), ""),
-      footnote7 = if_else(str_detect(var, "^shf_ntprobnp_cat"), footnote_marker_symbol(7), "")
+      footnote1 = if_else(var_tmp %in% modvars, footnote_marker_symbol(1), ""),
+      footnote2 = if_else(str_detect(var, "^scb_dispincome_cat"), footnote_marker_symbol(2), ""),
+      footnote3 = if_else(str_detect(var, "^shf_ntprobnp_cat"), footnote_marker_symbol(3), ""),
+      footnote4 = if_else(str_detect(var, "priorinc2016|postinc2017"), footnote_marker_symbol(4), ""),
     ) %>%
     unite(footnote, starts_with("footnote"), sep = "") %>%
     mutate(
@@ -90,46 +122,47 @@ tab1func <- function(data, stratavar, tabname) {
       "Categorical variables are presented with n (%) and tested with chi-square test and continuous variables with median [q1-q3] and tested with Kruskal-Wallis test."
     ),
     symbol = c(
-      "Source: SwedeHF",
-      "Source: KON/VAL",
-      "Source: SCB",
       "Included in the multiple imputation model (althought not necessarily imputed if there is no missing data) and logistic/cox models.",
-      "arb/acei/arni",
       "Medium within index year",
-      "Medium within EF"
+      "Medium within EF",
+      "Missing is for patients with indexyear <= 2016 and >= 2017 respectively"
     )
   )
 }
 ```
 
+```{r tab1full, cache=cacheon, dependson="tab1"}
+tab1func(data = rsdata, stratavar = "shf_ef_cat", tabname = "by EF - Full population", xlsname = "fullpopef")
+```
+
 ```{r tab1aid, cache=cacheon, dependson="tab1"}
-tab1func(rsdata, "scream_aid", "by ID/A")
+tab1func(data = rsdatalab, stratavar = "scream_aid", tabname = "by ID/A - Iron population", xlsname = "ida")
 ```
 
 ```{r tab1aidref, cache=cacheon, dependson="tab1"}
-tab1func(rsdata %>% filter(shf_ef_cat == "HFrEF"), "scream_aid", "by ID/A - HFrEF")
+tab1func(rsdatalab %>% filter(shf_ef_cat == "HFrEF"), "scream_aid", "by ID/A -  Iron population HFrEF", xlsname = "ida_ref")
 ```
 
 ```{r tab1aidmref, cache=cacheon, dependson="tab1"}
-tab1func(rsdata %>% filter(shf_ef_cat == "HFmrEF"), "scream_aid", "by ID/A - HFmrEF")
+tab1func(rsdatalab %>% filter(shf_ef_cat == "HFmrEF"), "scream_aid", "by ID/A - Iron population HFmrEF", xlsname = "ida_mref")
 ```
 
 ```{r tab1aidpef, cache=cacheon, dependson="tab1"}
-tab1func(rsdata %>% filter(shf_ef_cat == "HFpEF"), "scream_aid", "by ID/A - HFpEF")
+tab1func(rsdatalab %>% filter(shf_ef_cat == "HFpEF"), "scream_aid", "by ID/A - Iron population HFpEF", xlsname = "ida_pef")
 ```
 
 ```{r tab1id, cache=cacheon, dependson="tab1"}
-tab1func(rsdata, "scream_id", "by ID")
+tab1func(rsdatalab, "scream_id", "by ID - Iron population", xlsname = "id")
 ```
 
 ```{r tab1idref, cache=cacheon, dependson="tab1"}
-tab1func(rsdata %>% filter(shf_ef_cat == "HFrEF"), "scream_id", "by ID - HFrEF")
+tab1func(rsdatalab %>% filter(shf_ef_cat == "HFrEF"), "scream_id", "by ID - Iron population HFrEF", xlsname = "id_ref")
 ```
 
 ```{r tab1idmref, cache=cacheon, dependson="tab1"}
-tab1func(rsdata %>% filter(shf_ef_cat == "HFmrEF"), "scream_id", "by ID - HFmrEF")
+tab1func(rsdatalab %>% filter(shf_ef_cat == "HFmrEF"), "scream_id", "by ID - Iron population HFmrEF", xlsname = "id_mref")
 ```
 
 ```{r tab1idpef, cache=cacheon, dependson="tab1"}
-tab1func(rsdata %>% filter(shf_ef_cat == "HFpEF"), "scream_id", "by ID - HFpEF")
+tab1func(rsdatalab %>% filter(shf_ef_cat == "HFpEF"), "scream_id", "by ID - Iron population HFpEF", xlsname = "id_pef")
 ```

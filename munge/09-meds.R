@@ -18,7 +18,8 @@ meds2 <- meds2 %>%
   filter(diff <= 14 & diff >= -30 * 5) %>%
   group_by(LopNr) %>%
   slice(1) %>%
-  ungroup()
+  ungroup() %>%
+  select(LopNr, shf_indexdtm, ddr_ironoralsupp)
 
 rsdata <- left_join(
   rsdata,

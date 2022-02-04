@@ -58,7 +58,9 @@ SCREAM2
 ## Inclusion/exclusion criteria
 
 ```{r flow}
-default_kable(flow, caption = "Flowchart")
+footnote(default_kable(flow, caption = "Flowchart"),
+  symbol = c("If a patient does not have any posts with hb, ferritin, transferrin at index the first post is selected. If a patient has a first post without lab but a second with lab, the second post is selected.")
+)
 ```
 
 First patient in: `r min(rsdata$shf_indexdtm)` and last patient in: `r max(rsdata$shf_indexdtm)`.  
@@ -84,11 +86,8 @@ where the one closest to index is chosen. If there are two tests of the same lab
 from the same date the mean is calculated. The ferritin, transferrin and 
 hb value must be from the same date, the other labs can be from different dates (within the 90 days).
 
-The evaluation of ID/A at 6 months, 1 and 3 years is including patients with at least one available 
-lab of ferritin, transferrin and hb at the same date at 6 months after index +/- 3 months, 1 years after index +/- 3 months 
-and 3 years after index +/- 3 months. The lab values closest to the respective time points is chosen. 
-
-ddd_ironoralsupp is defined as at least one dispensed prescription with ATC strting with B03AA, B03AB, B03AD or B03AE within 5 months prior up to 14 days after index. 
+ddd_ironoralsupp is defined as at least one dispensed prescription with ATC strting 
+with B03AA, B03AB, B03AD or B03AE within 5 months prior up to 14 days after index. 
 
 # Statistical analysis 
 
@@ -102,7 +101,7 @@ comparisons were made and therefore the results should be viewed with some care.
 
 Missing data was imputed with multiple imputation (n = 10) using mice [@mice]. 
 Variables included in the model are indicated in 
-Table \ref{tab:tab1aid}. 
+Table \ref{tab:tab1aid}. The imputation is performed only on patients with hb, transferrin and ferritin at index (Iron population). 
 
 ## Baseline characteristics
 
@@ -110,7 +109,58 @@ Table \ref{tab:tab1aid}.
 
 ```
 
+\clearpage
+
+## Testing over time 
+
+The denominator is the full population that are alive and living in Stockholm county on 31 December of the respective calender year. 
+The numerator is the number of patients that have at least one  
+lab measure of hb, ferritin and transferrin (on same date) in the respective calender year. 
+Note that this could be prior to inclusion in SwedeHF. 
+
+```{r, child = "../src/overtime.Rmd"}
+
+```
+
+\clearpage
+
+## Time to first lab test after index
+
+Time to first laboratory test after index were presented with cumulative incidence curves, partly for first hb test, 
+partly first transferrin and ferritin (on same date) test, and partly all 3 (on same date). 
+Data were censored after 3 years, 2018-12-31 or death/move from Stockholm county. For the stratified analysis on patients with index date <= 2016, they were also censored at 2016-12-31. 
+
+The analysis is performed on the full population.
+
+```{r, child = "../src/timefirsttest.Rmd"}
+
+```
+
+\clearpage
+
+## Iron deficiency after index 
+
+The cumulative iron deficiency is presented within 6 mo, 1, 2 and 3 years. At least 
+one lab test within the respective time period is necessary to be in the analysis. 
+Data were censored 2018-12-31 or death/move from Stockholm county. 
+So a patient with iron deficiency at 7 months will not be included in the 
+6 mo analysis but will be included in both the numerator and denominator at 1 and 3 years. 
+
+The analysis is performed on the full population. 
+
+```{r, child = "../src/irondef.Rmd"}
+
+```
+
+\clearpage
+
 ## Follow-up ID/A
+
+The evaluation of ID/A at 6 months, 1 and 3 years is including patients with at least one available 
+lab of ferritin, transferrin and hb at the same date at 6 months after index +/- 3 months, 1 years after index +/- 3 months 
+and 3 years after index +/- 3 months. The lab values closest to the respective time points is chosen. 
+
+The analysis is performed on patients with hb, transferrin and ferritin at index (Iron population). 
 
 ```{r, child = "../src/tab_follow.Rmd"}
 
@@ -127,6 +177,8 @@ A p-value for interaction between EF and the respective variable (with the other
 (I did not present the OR ect from the interaction model because it seems 
 a bit untransparant when I thought about it, then the ORs would all be from separate models...). 
 
+The analysis is performed on patients with hb, transferrin and ferritin at index (Iron population). 
+
 ```{r, child = "../src/pred_id.Rmd"}
 
 ```
@@ -137,7 +189,7 @@ a bit untransparant when I thought about it, then the ORs would all be from sepa
 
 The following outcomes are considered: 
 
-- CV mortality + first HF hospitalization (is this the primary outcome???)
+- CV mortality + first HF hospitalization
 - CV mortality
 - All-cause mortality
 - First HF hospitalization
@@ -145,10 +197,11 @@ The following outcomes are considered:
 
 Data were censored at 3 years after index, 2019-12-31 or death/move from Stockholm county. 
 
+The analysis is performed on patients with hb, transferrin and ferritin at index (Iron population). 
+
 ### Association between ID/A and outcomes
 
-Time to first events were presented with 1-Kaplan-Meier curves for the outcome all-cause mortality 
-and cumulative incidence curves treating death as a competing event for other outcomes. 
+Time to first events were presented with cumulative incidence curves for the outcomes. 
 The mean cumulative function (MCF) was used to depict the recurrent events. 
 
 Cox proportional hazards regressions were 
@@ -181,7 +234,7 @@ The median (min-max) follow-up is
 
 ```
 
-\newpage
+\clearpage
 
 ### Association between ID and outcomes by EF
 
