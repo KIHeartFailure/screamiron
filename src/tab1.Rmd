@@ -88,7 +88,7 @@ tab1func <- function(data, stratavar, tabname, xlsname) {
   # footnotes
   tab1 <- tab1 %>%
     mutate(
-      footnote1 = if_else(var_tmp %in% modvars, footnote_marker_symbol(1), ""),
+      footnote1 = if_else(var_tmp %in% modvarsfcm, footnote_marker_symbol(1), ""),
       footnote2 = if_else(str_detect(var, "^scb_dispincome_cat"), footnote_marker_symbol(2), ""),
       footnote3 = if_else(str_detect(var, "^shf_ntprobnp_cat"), footnote_marker_symbol(3), ""),
       footnote4 = if_else(str_detect(var, "priorinc2016|postinc2017"), footnote_marker_symbol(4), ""),
@@ -122,7 +122,7 @@ tab1func <- function(data, stratavar, tabname, xlsname) {
       "Categorical variables are presented with n (%) and tested with chi-square test and continuous variables with median [q1-q3] and tested with Kruskal-Wallis test."
     ),
     symbol = c(
-      "Included in the multiple imputation model (althought not necessarily imputed if there is no missing data) and logistic/cox models.",
+      "Included in the multiple imputation model (althought not necessarily imputed if there is no missing data) and logistic/cox models. FCM is included only in the consistency analyses",
       "Medium within index year",
       "Medium within EF",
       "Missing is for patients with indexyear <= 2016 and >= 2017 respectively"

@@ -1,96 +1,156 @@
-```{r overtime, cache=cacheon, fig.cap="Trend over time of hb, ferritin, transferrin testing", fig.width=8, fig.height=7}
+```{r overtime, cache=cacheon}
 
-lab_iron_year <- lab_iron %>%
-  filter(!is.na(ferritin) &
-    !is.na(transf_sat) &
-    !is.na(hb)) %>%
-  mutate(labyear = year(labdtm)) %>%
-  group_by(LopNr, labyear) %>%
-  slice(1) %>%
-  ungroup() %>%
-  mutate(hbtf = 1)
-
-trendfunc <- function(year) {
-  tmpyear <- left_join(rsdata,
-    lab_iron_year %>% filter(labyear == year),
-    by = "LopNr"
-  ) %>%
-    filter(
-      censdtm >= ymd(paste0(year, "1231"))
-    ) %>%
-    mutate(hbtf = replace_na(hbtf, 0))
-
-  all <- tmpyear %>%
-    mutate(shf_ef_cat = "All") %>%
-    group_by(shf_ef_cat) %>%
-    count(hbtf) %>%
-    mutate(
-      per = n / sum(n) * 100,
-      ntot = paste0(n, "/", sum(n)),
-      year = year
-    ) %>%
+funcovertime <- function(data, ylimmy = c(0, 100)) {
+  lab_iron_year <- data %>%
+    mutate(labyear = year(labdtm)) %>%
+    group_by(LopNr, labyear) %>%
+    slice(1) %>%
     ungroup() %>%
-    filter(hbtf == 1)
+    mutate(hbtf = 1)
 
-  ef <- tmpyear %>%
-    group_by(shf_ef_cat) %>%
-    count(hbtf) %>%
-    mutate(
-      per = n / sum(n) * 100,
-      ntot = paste0(n, "/", sum(n)),
-      year = year
+  trendfunc <- function(year) {
+    tmpyear <- left_join(rsdata,
+      lab_iron_year %>% filter(labyear == year),
+      by = "LopNr"
     ) %>%
-    ungroup() %>%
-    filter(hbtf == 1)
+      filter(
+        censdtm >= ymd(paste0(year, "1231"))
+      ) %>%
+      mutate(hbtf = replace_na(hbtf, 0))
 
-  out <- bind_rows(all, ef)
+    all <- tmpyear %>%
+      mutate(shf_ef_cat = "All") %>%
+      group_by(shf_ef_cat) %>%
+      count(hbtf) %>%
+      mutate(
+        per = n / sum(n) * 100,
+        ntot = paste0(n, "/", sum(n)),
+        npercent = paste0(ntot, " (", fn(per, 1), "%)"),
+        year = year
+      ) %>%
+      ungroup() %>%
+      filter(hbtf == 1)
+
+    ef <- tmpyear %>%
+      group_by(shf_ef_cat) %>%
+      count(hbtf) %>%
+      mutate(
+        per = n / sum(n) * 100,
+        ntot = paste0(n, "/", sum(n)),
+        npercent = paste0(ntot, " (", fn(per, 1), "%)"),
+        year = year
+      ) %>%
+      ungroup() %>%
+      filter(hbtf == 1)
+
+    out <- bind_rows(all, ef)
+  }
+  trend <- trendfunc(2006)
+  trend <- rbind(trend, trendfunc(2007))
+  trend <- rbind(trend, trendfunc(2008))
+  trend <- rbind(trend, trendfunc(2009))
+  trend <- rbind(trend, trendfunc(2010))
+  trend <- rbind(trend, trendfunc(2011))
+  trend <- rbind(trend, trendfunc(2012))
+  trend <- rbind(trend, trendfunc(2013))
+  trend <- rbind(trend, trendfunc(2014))
+  trend <- rbind(trend, trendfunc(2015))
+  trend <- rbind(trend, trendfunc(2016))
+  trend <- rbind(trend, trendfunc(2017))
+  trend <- rbind(trend, trendfunc(2018))
+
+  trendprint <- trend %>%
+    select(shf_ef_cat, year, npercent) %>%
+    pivot_wider(names_from = shf_ef_cat, values_from = npercent)
+
+  trend2 <- trend %>%
+    select(shf_ef_cat, year, per) %>%
+    pivot_wider(names_from = shf_ef_cat, values_from = per) %>%
+    select(-year) %>%
+    as.matrix()
+
+  cexmy <- 1.2
+  # c(bottom, left, top, right) default c(5, 4, 4, 2) + 0.1.
+  par(mar = c(4, 4, .5, .5) + 0.1)
+
+
+  matplot(trend2,
+    type = "b",
+    pch = 19,
+    lty = 1,
+    col = global_kicols[1:4],
+    # lty = unique(riket$ltymy),
+    lwd = 3,
+    # cex = 1.5,
+    axes = FALSE,
+    xaxs = "i",
+    yaxs = "i",
+    ylim = ylimmy,
+    xlim = c(1 - 0.5, nrow(trend2) + 0.5),
+    ylab = "Percent",
+    xlab = "Year",
+    cex.lab = cexmy
+  )
+
+  box(bty = "l")
+  axis(1, at = 1:nrow(trend2), labels = 2006:2018, cex.axis = cexmy)
+  axis(2, seq(ylimmy[1], ylimmy[2], 10), las = 2, cex.axis = cexmy)
+
+  legend("topleft", col = global_kicols[1:4], lwd = 3, colnames(trend2), bty = "n")
+  
+  return(trendprint)
 }
-trend <- trendfunc(2006)
-trend <- rbind(trend, trendfunc(2007))
-trend <- rbind(trend, trendfunc(2008))
-trend <- rbind(trend, trendfunc(2009))
-trend <- rbind(trend, trendfunc(2010))
-trend <- rbind(trend, trendfunc(2011))
-trend <- rbind(trend, trendfunc(2012))
-trend <- rbind(trend, trendfunc(2013))
-trend <- rbind(trend, trendfunc(2014))
-trend <- rbind(trend, trendfunc(2015))
-trend <- rbind(trend, trendfunc(2016))
-trend <- rbind(trend, trendfunc(2017))
-trend <- rbind(trend, trendfunc(2018))
+```
 
-trend2 <- trend %>%
-  select(shf_ef_cat, year, per) %>%
-  pivot_wider(names_from = shf_ef_cat, values_from = per) %>%
-  select(-year) %>%
-  as.matrix()
+```{r overtimehb, cache=cacheon, dependson = "overtime", fig.cap="Trend over time of hb testing", fig.width=8, fig.height=7}
 
-cexmy <- 1.2
-# c(bottom, left, top, right) default c(5, 4, 4, 2) + 0.1.
-par(mar = c(4, 4, .5, .5) + 0.1)
+hbtrend <- funcovertime(data = lab_iron %>%
+  filter(
+    !is.na(hb)
+  ))
+```
 
+```{r overtimehbprint, cache=cacheon, dependson = c("overtime", "overtimehb")}
 
-matplot(trend2,
-  type = "b",
-  pch = 19,
-  lty = 1,
-  col = global_kicols[1:4],
-  # lty = unique(riket$ltymy),
-  lwd = 3,
-  # cex = 1.5,
-  axes = FALSE,
-  xaxs = "i",
-  yaxs = "i",
-  ylim = c(0, 40),
-  xlim = c(1 - 0.5, nrow(trend2) + 0.5),
-  ylab = "Percent",
-  xlab = "Year",
-  cex.lab = cexmy
+default_kable(hbtrend,
+  font_size = 8,
+  caption = paste0("Trend over time of hb testing"),
+  escape = TRUE, 
+  scale_down = F
 )
+```
 
-box(bty = "l")
-axis(1, at = 1:nrow(trend2), labels = 2006:2018, cex.axis = cexmy)
-axis(2, seq(0, 40, 10), las = 2, cex.axis = cexmy)
+```{r overtimeft, cache=cacheon, dependson = "overtime", fig.cap="Trend over time of ferritin & transferrin testing", fig.width=8, fig.height=7}
 
-legend("topleft", col = global_kicols[1:4], lwd = 3, colnames(trend2), bty = "n")
+fttrend <- funcovertime(data = lab_iron %>%
+  filter(!is.na(ferritin) &
+    !is.na(transf_sat)))
+```
+
+```{r overtimeftprint, cache=cacheon, dependson = c("overtime", "overtimeft")}
+
+default_kable(fttrend,
+  font_size = 8,
+  caption = paste0("Trend over time of ferritin and transferrin testing"),
+  escape = TRUE, 
+  scale_down = F
+)
+```
+
+```{r overtimehbft, cache=cacheon, dependson = "overtime", fig.cap="Trend over time of hb, ferritin & transferrin testing", fig.width=8, fig.height=7}
+
+hbfttrend <- funcovertime(data = lab_iron %>%
+  filter(!is.na(hb) & 
+           !is.na(ferritin) &
+    !is.na(transf_sat)))
+```
+
+```{r overtimehbftprint, cache=cacheon, dependson = c("overtime", "overtimehbft")}
+
+default_kable(hbfttrend,
+  font_size = 8,
+  caption = paste0("Trend over time of hb, ferritin and transferrin testing"),
+  escape = TRUE, 
+  scale_down = F
+)
 ```

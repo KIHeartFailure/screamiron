@@ -64,19 +64,20 @@ rsdata <- rsdata %>%
       shf_weight > 70 & scream_hb >= 100 & scream_hb < 140 ~ 1500,
       shf_weight > 70 & scream_hb >= 140 & scream_hb <= 150 ~ 500
     )),
-    
+    shf_ferrocarboxymaltosisimp = case_when(
+      shf_indexyear <= 2016 & is.na(shf_ferrocarboxymaltosis) ~ "No",
+      TRUE ~ as.character(shf_ferrocarboxymaltosis)
+    ),
     shf_ferrocarboxymaltosisdose = factor(shf_ferrocarboxymaltosisdose),
-    
     shf_ferrocarboxymaltosis_priorinc2016 = if_else(shf_indexyear <= 2016, shf_ferrocarboxymaltosis, factor(NA_character_)),
     shf_ferrocarboxymaltosis_postinc2017 = if_else(shf_indexyear >= 2017, shf_ferrocarboxymaltosis, factor(NA_character_)),
-    
     ddr_ironoralsupp_priorinc2016 = if_else(shf_indexyear <= 2016, ddr_ironoralsupp, factor(NA_character_)),
     ddr_ironoralsupp_postinc2017 = if_else(shf_indexyear >= 2017, ddr_ironoralsupp, factor(NA_character_)),
-    
-    fcm_ironoral = factor(case_when(is.na(shf_ferrocarboxymaltosis) | is.na(ddr_ironoralsupp) ~ NA_real_, 
-                             shf_ferrocarboxymaltosis == "Yes" | ddr_ironoralsupp == "Yes" ~ 1, 
-                             TRUE ~ 0), levels = 0:1, labels = c("No", "Yes")),
-    
+    fcm_ironoral = factor(case_when(
+      is.na(shf_ferrocarboxymaltosis) | is.na(ddr_ironoralsupp) ~ NA_real_,
+      shf_ferrocarboxymaltosis == "Yes" | ddr_ironoralsupp == "Yes" ~ 1,
+      TRUE ~ 0
+    ), levels = 0:1, labels = c("No", "Yes")),
     fcm_ironoral_postinc2017 = if_else(shf_indexyear >= 2017, fcm_ironoral, factor(NA_character_)),
 
     ## lab follow-up
@@ -349,5 +350,5 @@ rsdata <- rsdata %>%
 
 # Create data with hb, ferritin and transferrin at index ------------------
 
-rsdatalab <- rsdata %>% 
+rsdatalab <- rsdata %>%
   filter(hbtfindex == 1)

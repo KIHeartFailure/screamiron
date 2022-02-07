@@ -63,7 +63,7 @@ survfunc <- function(time, event, eventcr = NULL, eventname, rep = FALSE) {
 
     amod <- with(imprsdatalab, coxph(formula(paste0(
       "Surv(", time, ",", event, " == 'Yes') ~ scream_id +",
-      paste(modvars, collapse = " + ")
+      paste(modvarstmp, collapse = " + ")
     ))))
 
     ## df the number of events minus the regression coefficients.

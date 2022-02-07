@@ -1,4 +1,4 @@
-```{r outtabaid, cache=cacheon}
+```{r outtabaidfcm, cache=cacheon}
 survfunc <- function(time, event, eventcr = NULL, eventname, rep = FALSE) {
   out <- data.frame(matrix(NA, ncol = 6, nrow = ifelse(is.null(eventcr), 3, 4)))
 
@@ -40,7 +40,7 @@ survfunc <- function(time, event, eventcr = NULL, eventname, rep = FALSE) {
     fn(r$upper, dig = 1), ")"
   )
 
-  modvarstmp <- modvars[!modvars %in% c("scream_id", "scream_anemia")]
+  modvarstmp <- modvarsfcm[!modvarsfcm %in% c("scream_id", "scream_anemia")]
   if (!rep) {
     # cox regressions
     ## crude
@@ -61,7 +61,7 @@ survfunc <- function(time, event, eventcr = NULL, eventname, rep = FALSE) {
     ## adjusted covs
     out[3, 2] <- "Adjusted HR (95% CI), p-value"
 
-    amod <- with(imprsdatalab, coxph(formula(paste0(
+    amod <- with(imprsdatalabfcm, coxph(formula(paste0(
       "Surv(", time, ",", event, " == 'Yes') ~ scream_aid +",
       paste(modvarstmp, collapse = " + ")
     ))))
@@ -83,7 +83,7 @@ survfunc <- function(time, event, eventcr = NULL, eventname, rep = FALSE) {
     if (!is.null(eventcr)) {
       out[4, 2] <- "Adjusted, death as competing event, HR (95% CI), p-value"
 
-      nams <- names(mice::complete(imprsdatalab, 1))
+      nams <- names(mice::complete(imprsdatalabfcm, 1))
       modvarscr <- nams[str_detect(nams, "_cr_")]
       modvarscr <- modvarscr[!modvarscr %in% 
                                c("scream_anemia_cr_Yes", "scream_id_cr_Yes", "scream_aid_cr_ApIDm", "scream_aid_cr_AmIDp", "scream_aid_cr_ApIDp")]
@@ -92,7 +92,7 @@ survfunc <- function(time, event, eventcr = NULL, eventname, rep = FALSE) {
         event = eventcr,
         time = time,
         xvars = c("scream_aid_cr_ApIDm", "scream_aid_cr_AmIDp", "scream_aid_cr_ApIDp", modvarscr),
-        data = imprsdatalab, 
+        data = imprsdatalabfcm, 
       )
       
       smod <- summary(pool(mod))
@@ -122,7 +122,7 @@ survfunc <- function(time, event, eventcr = NULL, eventname, rep = FALSE) {
     ))
 
     ## adjusted individual covariates
-    amod <- with(imprsdatalab, glm.nb(formula(paste0(
+    amod <- with(imprsdatalabfcm, glm.nb(formula(paste0(
       event, " ~ scream_aid + offset(log(", time, ")) +",
       paste(modvarstmp, collapse = " + ")
     ))))
@@ -177,10 +177,10 @@ outall <- rbind(
   s1, s2, s3, s4, s5
 )
 
-write.xlsx(outall, paste0("./output/tabs/out_ida_", Sys.Date(), ".xlsx"), rowNames = FALSE, overwrite = TRUE)
+write.xlsx(outall, paste0("./output/tabs/out_idafcm_", Sys.Date(), ".xlsx"), rowNames = FALSE, overwrite = TRUE)
 
 default_kable(outall,
   font_size = 6,
-  caption = "Association between ID/A and outcomes"
+  caption = "Association between ID/A and outcomes - Consistency analysis with FCM"
 )
 ```

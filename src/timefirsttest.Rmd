@@ -1,48 +1,6 @@
 ```{r timefirsttestfunc, cache=cacheon}
 
-timelabfunc <- function(labdata, name) {
-  tmp <- left_join(
-    rsdata %>% select(LopNr, shf_indexdtm),
-    labdata,
-    by = "LopNr"
-  ) %>%
-    mutate(diff = as.numeric(labdtm - shf_indexdtm)) %>%
-    filter(diff >= 0) %>%
-    group_by(LopNr) %>%
-    arrange(diff) %>%
-    slice(1) %>%
-    ungroup() %>%
-    select(LopNr, diff)
-
-  rsdata <<- left_join(
-    rsdata,
-    tmp,
-    by = "LopNr"
-  ) %>%
-    mutate(
-      censtime2016 = if_else(shf_indexdtm <= ymd("2016-12-31"),
-        pmin(as.numeric(ymd("2016-12-31") - shf_indexdtm), sos_outtime_death, na.rm = T),
-        sos_outtime_death
-      ),
-      !!sym(paste0("time2016_", name)) := pmin(diff, censtime2016, na.rm = T),
-      !!sym(paste0("event2016_", name)) := case_when(
-        !is.na(diff) & !!sym(paste0("time2016_", name)) == diff ~ "Yes",
-        TRUE ~ "No"
-      ),
-      !!sym(paste0("time_", name)) := pmin(diff, sos_outtime_death, na.rm = T),
-      !!sym(paste0("event_", name)) := case_when(
-        !is.na(diff) & !!sym(paste0("time_", name)) == diff ~ "Yes",
-        TRUE ~ "No"
-      )
-    ) %>%
-    select(-diff, -censtime2016)
-}
-
-timelabfunc(labdata = lab_iron %>% filter(!is.na(hb)), name = "hb")
-timelabfunc(labdata = lab_iron %>% filter(!is.na(ferritin) & !is.na(transf_sat)), name = "ft")
-timelabfunc(labdata = lab_iron %>% filter(!is.na(hb) & !is.na(ferritin) & !is.na(transf_sat)), name = "hbft")
-
-kmlabfunc <- function(lab, labname, posadj = rep(0, 3), endtime = 3) {
+kmlabfunc <- function(data, lab, labname, posadj = rep(0, 3), endtime = 3) {
   time <- paste0("time_", lab)
   event <- paste0("event_", lab)
   time2016 <- paste0("time2016_", lab)
@@ -50,10 +8,10 @@ kmlabfunc <- function(lab, labname, posadj = rep(0, 3), endtime = 3) {
 
   cexmy <- 1.2
   fitall <- survfit(formula(paste0("Surv(", time, ",", event, "=='Yes') ~ 1")),
-    data = rsdata
+    data = data
   )
   fit2016 <- survfit(formula(paste0("Surv(", time2016, ",", event2016, "=='Yes') ~ shf_indexyear_cat2")),
-    data = rsdata
+    data = data
   )
 
   levs <- c("All", levels(rsdata %>% pull(shf_indexyear_cat2)))
@@ -120,29 +78,14 @@ kmlabfunc <- function(lab, labname, posadj = rep(0, 3), endtime = 3) {
     labels = nrisk2016$n.risk[nrisk2016$strata == paste0("shf_indexyear_cat2=", levs[3])],
     line = 6, tick = FALSE, cex.axis = cexmy
   )
-
+  
+  
   # sfitall <- summary(fitall)$table
   # sfit2016 <- summary(fit2016)$table
   # text(1.5 * 365, 0.3, "Median days (95% CI)", font = 2)
   # text(1.5 * 365, 0.25, paste0(levs[1], ": ", sfitall[7], " (", sfitall[8], "-", sfitall[9], ")"))
   # text(1.5 * 365, 0.2, paste0(levs[2], ": ", sfit2016[1, 7], " (", sfit2016[1, 8], "-", sfit2016[1, 9], ")"))
   # text(1.5 * 365, 0.15, paste0(levs[3], ": ", sfit2016[2, 7], " (", sfit2016[2, 8], "-", sfit2016[2, 9], ")"))
-}
-
-kmdslabfunc <- function(lab, labname) {
-  time <- paste0("time_", lab)
-  event <- paste0("event_", lab)
-  time2016 <- paste0("time2016_", lab)
-  event2016 <- paste0("event2016_", lab)
-
-  fitall <- survfit(formula(paste0("Surv(", time, ",", event, "=='Yes') ~ 1")),
-    data = rsdata
-  )
-  fit2016 <- survfit(formula(paste0("Surv(", time2016, ",", event2016, "=='Yes') ~ shf_indexyear_cat2")),
-    data = rsdata
-  )
-
-  levs <- c("All", levels(rsdata %>% pull(shf_indexyear_cat2)))
 
   sfitall <- summary(fitall, c(365 / 2, 365, 2 * 365, 3 * 365), extend = T)
   sfit2016 <- summary(fit2016, c(365 / 2, 365, 2 * 365, 3 * 365), extend = T)
@@ -170,31 +113,106 @@ kmdslabfunc <- function(lab, labname) {
 }
 ```
 
-```{r timefirsttesthb, cache=cacheon, dependson="timefirsttestfunc", fig.cap="Time to first HB test", fig.width=8, fig.height=7}
+```{r timefirsttesthb, cache=cacheon, dependson="timefirsttestfunc", fig.cap="Time to first HB test - Overall", fig.width=8, fig.height=7}
 
-kmlabfunc(lab = "hb", labname = "hb", posadj = c(-0.01, 0.01, 0))
+tab <- kmlabfunc(data = rsdata, lab = "hb", labname = "hb", posadj = c(-0.01, 0.01, 0))
 ```
 
-```{r timefirsttestft, cache=cacheon, dependson="timefirsttestfunc", fig.cap="Time to first ferritin & transferrin test", fig.width=8, fig.height=7}
+```{r timefirsttestft, cache=cacheon, dependson="timefirsttestfunc", fig.cap="Time to first ferritin & transferrin test - Overall", fig.width=8, fig.height=7}
 
-kmlabfunc(lab = "ft", labname = "ferritin & transferrin")
+tab <- bind_rows(tab, kmlabfunc(data = rsdata, lab = "ft", labname = "ferritin & transferrin"))
 ```
 
-```{r timefirsttesthbft, cache=cacheon, dependson="timefirsttestfunc", fig.cap="Time to first HB, ferritin & transferrin test", fig.width=8, fig.height=7}
+```{r timefirsttesthbft, cache=cacheon, dependson="timefirsttestfunc", fig.cap="Time to first HB, ferritin & transferrin test - Overall", fig.width=8, fig.height=7}
 
-kmlabfunc(lab = "hbft", labname = "hb, ferritin & transferrin")
+tab <- bind_rows(tab, kmlabfunc(data = rsdata, lab = "hbft", labname = "hb, ferritin & transferrin"))
 ```
 
-```{r timefirsttesttab, cache=cacheon, dependson="timefirsttestfunc"}
-
-tab <- kmdslabfunc(lab = "hb", labname = "hb")
-tab <- bind_rows(tab, kmdslabfunc(lab = "ft", labname = "ferritin & transferrin"))
-tab <- bind_rows(tab, kmdslabfunc(lab = "hbft", labname = "hb, ferritin & transferrin"))
+```{r timefirsttesttab, cache=cacheon, dependson=c("timefirsttestfunc", "timefirsttesthb", "timefirsttestft", "timefirsttesthbft")}
 
 default_kable(tab,
-  font_size = 6,
+  font_size = 8,
   scale_down = F,
-  caption = "Time to first test (from KM curve)",
+  caption = "Time to first test (from KM curve) - Overall",
+  escape = TRUE
+)
+```
+
+```{r timefirsttesthbref, cache=cacheon, dependson="timefirsttestfunc", fig.cap="Time to first HB test - HFrEF", fig.width=8, fig.height=7}
+
+tab <- kmlabfunc(data = rsdata %>% filter(shf_ef_cat == "HFrEF"), lab = "hb", labname = "hb", posadj = c(-0.01, 0.01, 0))
+```
+
+```{r timefirsttestftref, cache=cacheon, dependson="timefirsttestfunc", fig.cap="Time to first ferritin & transferrin test - HFrEF", fig.width=8, fig.height=7}
+
+tab <- bind_rows(tab, kmlabfunc(data = rsdata %>% filter(shf_ef_cat == "HFrEF"), lab = "ft", labname = "ferritin & transferrin"))
+```
+
+```{r timefirsttesthbftref, cache=cacheon, dependson="timefirsttestfunc", fig.cap="Time to first HB, ferritin & transferrin test - HFrEF", fig.width=8, fig.height=7}
+
+tab <- bind_rows(tab, kmlabfunc(data = rsdata %>% filter(shf_ef_cat == "HFrEF"), lab = "hbft", labname = "hb, ferritin & transferrin"))
+```
+
+```{r timefirsttesttabref, cache=cacheon, dependson=c("timefirsttestfunc", "timefirsttesthbref", "timefirsttestftref", "timefirsttesthbftref")}
+
+default_kable(tab,
+  font_size = 8,
+  scale_down = F,
+  caption = "Time to first test (from KM curve) - HFrEF",
+  escape = TRUE
+)
+```
+
+
+```{r timefirsttesthbmref, cache=cacheon, dependson="timefirsttestfunc", fig.cap="Time to first HB test - HFmrEF", fig.width=8, fig.height=7}
+
+tab <- kmlabfunc(data = rsdata %>% filter(shf_ef_cat == "HFmrEF"), lab = "hb", labname = "hb", posadj = c(-0.01, 0.01, 0))
+```
+
+```{r timefirsttestftmref, cache=cacheon, dependson="timefirsttestfunc", fig.cap="Time to first ferritin & transferrin test - HFmrEF", fig.width=8, fig.height=7}
+
+tab <- bind_rows(tab, kmlabfunc(data = rsdata %>% filter(shf_ef_cat == "HFmrEF"), lab = "ft", labname = "ferritin & transferrin"))
+```
+
+```{r timefirsttesthbftmref, cache=cacheon, dependson="timefirsttestfunc", fig.cap="Time to first HB, ferritin & transferrin test - HFmrEF", fig.width=8, fig.height=7}
+
+tab <- bind_rows(tab, kmlabfunc(data = rsdata %>% filter(shf_ef_cat == "HFmrEF"), lab = "hbft", labname = "hb, ferritin & transferrin"))
+```
+
+```{r timefirsttesttabmref, cache=cacheon, dependson=c("timefirsttestfunc", "timefirsttesthbmref", "timefirsttestftmref", "timefirsttesthbftmref")}
+
+default_kable(tab,
+  font_size = 8,
+  scale_down = F,
+  caption = "Time to first test (from KM curve) - HFmrEF",
+  escape = TRUE
+)
+```
+
+
+```{r timefirsttesthbpef, cache=cacheon, dependson="timefirsttestfunc", fig.cap="Time to first HB test - HFpEF", fig.width=8, fig.height=7}
+
+tab <- kmlabfunc(data = rsdata %>% filter(shf_ef_cat == "HFpEF"), lab = "hb", labname = "hb", posadj = c(-0.01, 0.01, 0))
+```
+
+```{r timefirsttestftpef, cache=cacheon, dependson="timefirsttestfunc", fig.cap="Time to first ferritin & transferrin test - HFpEF", fig.width=8, fig.height=7}
+
+tab <- bind_rows(tab, kmlabfunc(data = rsdata %>% filter(shf_ef_cat == "HFpEF"), lab = "ft", labname = "ferritin & transferrin", 
+                 posadj = c(0, -0.015, 0.015)))
+```
+
+```{r timefirsttesthbftpef, cache=cacheon, dependson="timefirsttestfunc", fig.cap="Time to first HB, ferritin & transferrin test - HFpEF", fig.width=8, fig.height=7}
+
+tab <- bind_rows(tab, kmlabfunc(data = rsdata %>% filter(shf_ef_cat == "HFpEF"), lab = "hbft", labname = "hb, ferritin & transferrin", 
+                 posadj = c(0, -0.015, 0.015)))
+```
+
+```{r timefirsttesttabpef, cache=cacheon, dependson=c("timefirsttestfunc", "timefirsttesthbpef", "timefirsttestftpef", "timefirsttesthbftpef")}
+
+default_kable(tab,
+  font_size = 8,
+  scale_down = F,
+  caption = "Time to first test (from KM curve) - HFpEF",
   escape = TRUE
 )
 ```

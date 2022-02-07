@@ -102,3 +102,48 @@ labfuncfollow <- function(time, timename) {
 labfuncfollow(182, "6mo")
 labfuncfollow(365, "1yr")
 labfuncfollow(365 * 3, "3yr")
+
+
+# First hb, transferrin/ferritin ------------------------------------------
+
+timelabfunc <- function(labdata, name) {
+  tmp <- left_join(
+    rsdata %>% select(LopNr, shf_indexdtm),
+    labdata,
+    by = "LopNr"
+  ) %>%
+    mutate(diff = as.numeric(labdtm - shf_indexdtm)) %>%
+    filter(diff >= 0) %>%
+    group_by(LopNr) %>%
+    arrange(diff) %>%
+    slice(1) %>%
+    ungroup() %>%
+    select(LopNr, diff)
+
+  rsdata <<- left_join(
+    rsdata,
+    tmp,
+    by = "LopNr"
+  ) %>%
+    mutate(
+      censtime2016 = if_else(shf_indexdtm <= ymd("2016-12-31"),
+        pmin(as.numeric(ymd("2016-12-31") - shf_indexdtm), sos_outtime_death, na.rm = T),
+        sos_outtime_death
+      ),
+      !!sym(paste0("time2016_", name)) := pmin(diff, censtime2016, na.rm = T),
+      !!sym(paste0("event2016_", name)) := case_when(
+        !is.na(diff) & !!sym(paste0("time2016_", name)) == diff ~ "Yes",
+        TRUE ~ "No"
+      ),
+      !!sym(paste0("time_", name)) := pmin(diff, sos_outtime_death, na.rm = T),
+      !!sym(paste0("event_", name)) := case_when(
+        !is.na(diff) & !!sym(paste0("time_", name)) == diff ~ "Yes",
+        TRUE ~ "No"
+      )
+    ) %>%
+    select(-diff, -censtime2016)
+}
+
+timelabfunc(labdata = lab_iron %>% filter(!is.na(hb)), name = "hb")
+timelabfunc(labdata = lab_iron %>% filter(!is.na(ferritin) & !is.na(transf_sat)), name = "ft")
+timelabfunc(labdata = lab_iron %>% filter(!is.na(hb) & !is.na(ferritin) & !is.na(transf_sat)), name = "hbft")

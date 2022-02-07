@@ -46,3 +46,37 @@ imprsdatalab <-
   }
 stopImplicitCluster()
 
+
+# Impute with fcm (<=2016 all imputed with No) ----------------------------
+
+noimpvars <- names(rsdatalab)[!names(rsdatalab) %in% modvarsfcm]
+
+ini <- mice(rsdatalab, maxit = 0, print = F)
+
+pred <- ini$pred
+pred[, noimpvars] <- 0
+pred[noimpvars, ] <- 0 # redundant
+
+# change method used in imputation to prop odds model
+meth <- ini$method
+meth[c("scb_education", "scb_dispincome")] <- "polr"
+meth[noimpvars] <- ""
+
+cl <- makeCluster(cores_2_use)
+clusterSetRNGStream(cl, 49956)
+registerDoParallel(cl)
+
+imprsdatalabfcm <-
+  foreach(
+    no = 1:cores_2_use,
+    .combine = ibind,
+    .export = c("meth", "pred", "rsdatalab"),
+    .packages = "mice"
+  ) %dopar% {
+    mice(rsdatalab,
+      m = m_2_use, maxit = 10, method = meth,
+      predictorMatrix = pred,
+      printFlag = FALSE
+    )
+  }
+stopImplicitCluster()

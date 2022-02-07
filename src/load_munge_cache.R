@@ -19,11 +19,13 @@ ProjectTemplate::cache("rsdatalab")
 ProjectTemplate::cache("rsdatalab_rec_hosphf")
 
 ProjectTemplate::cache("imprsdatalab")
+ProjectTemplate::cache("imprsdatalabfcm")
 
 ProjectTemplate::cache("lab_iron")
 
 ProjectTemplate::cache("tabvars")
 ProjectTemplate::cache("modvars")
+ProjectTemplate::cache("modvarsfcm")
 ProjectTemplate::cache("nomultmodvars")
 
 ProjectTemplate::cache("meta.variables.Sheet.1")

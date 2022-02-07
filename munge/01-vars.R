@@ -127,5 +127,6 @@ tabvars_not_in_mod <- c(
 )
 
 modvars <- tabvars[!(tabvars %in% tabvars_not_in_mod)]
+modvarsfcm <- c(modvars, "shf_ferrocarboxymaltosisimp")
 
 nomultmodvars <- c("sos_com_dementia", "shf_sos_com_hypertension")
