@@ -1,0 +1,86 @@
+```{r outtabidpredfunc, cache=cacheon}
+
+survfuncpred <- function(predvar, impdata) {
+  levs <- levels(rsdatalab %>% pull(!!sym(predvar)))
+  nlevs <- length(levs) - 1
+  levsid <- levels(rsdatalab %>% pull(scream_id))
+
+  out <- data.frame(matrix(NA, ncol = 4, nrow = nlevs))
+  colnames(out) <- c("Group", levsid, "pinteraction")
+
+  out[, 1] <- paste0(predvar, ": ", levs[2:(nlevs + 1)], " vs. ", levs[1])
+
+  modvarstmp <- modvars[!modvars %in% c("scream_id", predvar)]
+
+  for (i in seq_along(levsid)) {
+    amod <- with(impdata, coxph(formula(paste0(
+      "Surv(sos_outtime_hosphf, sos_out_deathcvhosphf == 'Yes') ~ ", predvar, " * relevel(scream_id, ref = '", levsid[i], "') + ",
+      paste(modvarstmp, collapse = " + ")
+    ))))
+
+    ## df the number of events minus the regression coefficients.
+    ## There is support for this from middle of page 149 of the book by Parmer & Machin (ISBN 0471936405)
+    asmod <- summary(pool(amod,
+      dfcom =
+        (amod$analyses[[1]]$nevent - length(amod$analyses[[1]]$coefficients))
+    ))
+
+    out[1:nlevs, i + 1] <- paste0(
+      fn(exp(asmod$estimate[1:nlevs]), dig = 2),
+      " (", fn(exp(asmod$estimate[1:nlevs] - global_z05 * asmod$std.error[1:nlevs]), dig = 2),
+      "-", fn(exp(asmod$estimate[1:nlevs] + global_z05 * asmod$std.error[1:nlevs]), dig = 2), "), ",
+      fn(asmod$p.value[1:nlevs], dig = 3, p = T)
+    )
+
+    if (i == 1) {
+      if (nlevs == 2) {
+        out[1, 4] <- fn(last(asmod$p.value), dig = 3, p = TRUE)
+      } else {
+        amodnoint <- with(impdata, coxph(formula(paste0(
+          "Surv(sos_outtime_hosphf, sos_out_deathcvhosphf == 'Yes') ~ ", predvar, " + relevel(scream_id, ref = '", levsid[i], "') + ",
+          paste(modvarstmp, collapse = " + ")
+        ))))
+
+        int <- D1(amod, amodnoint)
+
+        out[1, 4] <- fn(int$result[4], dig = 3, p = TRUE)
+      }
+    }
+  }
+  return(out)
+}
+```
+
+```{r outtabidpred, cache=cacheon, dependson="outtabidpred"}
+outpred <- lapply(modvars[!modvars %in% c("scream_id")], survfuncpred, impdata = imprsdatalab)
+outpred2 <- outpred %>% map_dfr(as_tibble, .name_repair = "universal")
+
+write.xlsx(outpred2, paste0("./output/tabs/outpred_id_", Sys.Date(), ".xlsx"), rowNames = FALSE, overwrite = TRUE)
+
+footnote(default_kable(outpred2,
+  col.names = c("Variable", "No ID", "ID", "p-value interaction*"),
+  font_size = 6,
+  scale_down = F,
+  caption = "Association between predictors in ID subgroups and outcomes",
+  longtable = TRUE
+),
+symbol = "The p-value for interaction is applicaple for all levels of the variable"
+)
+```
+
+\clearpage
+
+```{r outtabidpredfcm, cache=cacheon, dependson="outtabidpred"}
+outpred <- lapply(modvarsfcm[!modvarsfcm %in% c("scream_id")], survfuncpred, impdata = imprsdatalabfcm)
+outpred2 <- outpred %>% map_dfr(as_tibble, .name_repair = "universal")
+
+write.xlsx(outpred2, paste0("./output/tabs/outpred_id_fcm_", Sys.Date(), ".xlsx"), rowNames = FALSE, overwrite = TRUE)
+
+default_kable(outpred2,
+  col.names = c("Variable", "No ID", "ID", "p-value interaction"),
+  font_size = 6,
+  scale_down = F,
+  caption = "Association between predictors in ID subgroups and outcomes - Consistency analysis with FCM",
+  longtable = TRUE
+)
+```

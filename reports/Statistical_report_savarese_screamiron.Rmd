@@ -157,6 +157,19 @@ The analysis is performed on the full population.
 
 \clearpage
 
+## Follow-up ID/A
+
+The evaluation of ID/A at 6 months, 1 and 3 years is including patients with at least one available 
+lab of ferritin, transferrin and hb at the same date at 6 months after index +/- 3 months, 1 years after index +/- 3 months 
+and 3 years after index +/- 3 months. The lab values closest to the respective time points is chosen. 
+The analysis is performed on patients with hb, transferrin and ferritin at index (Iron population). 
+
+```{r, child = "../src/tab_follow.Rmd"}
+
+```
+
+\clearpage
+
 ## Predictors of ID at index
 
 The association between baseline covariates and ID was investigated using 
@@ -265,6 +278,19 @@ including the log of time as an offset in the model, crude and adjusted as above
 ```
 
 ```{r, child = "../src/outtab_idef_fcm.Rmd"}
+
+```
+
+\clearpage
+
+### Association between predictors and CVD/first HFH in ID subgroups
+
+Cox proportional hazards regressions were 
+used to model the time to first HFH/CVD. The model contains all the variables indicated in 
+Table \ref{tab:tab1aid}, ID and the interaction between ID and the respective variable 
+(NOTE: this means that the data presented are from different models). 
+
+```{r, child = "../src/outtab_idpred.Rmd"}
 
 ```
 
