@@ -13,7 +13,7 @@ kmfunc <- function(data, time, event, eventname, yposplus = rep(0, 4)) {
     ylab = eventname,
     xscale = 365,
     yscale = 100,
-    col = global_kicols,
+    col = global_cols[c(3, 3, 8, 8)],
     mark.time = FALSE,
     bty = "n",
     xlim = c(0, 3 * 365),
@@ -22,7 +22,7 @@ kmfunc <- function(data, time, event, eventname, yposplus = rep(0, 4)) {
     cex.lab = cexmy,
     axes = F,
     lwd = 3,
-    lty = c(1, 2, 3, 4),
+    lty = c(2, 1, 2, 1),
     xaxs = "i", yaxs = "i"
   )
 
@@ -79,36 +79,36 @@ mcffunc <- function(data, datarec, event, eventname, yposplus = rep(0, 2)) {
     fits@MCF$MCF[fits@MCF$scream_aid == "A-/ID-"],
     type = "l",
     ylab = eventname,
-    col = global_kicols[1],
+    col = global_cols[3],
     xlim = c(0, 3 * 365),
     ylim = c(0, 3),
     xlab = "Years",
     cex.lab = cexmy,
     axes = F,
     lwd = 4,
-    lty = 1,
+    lty = 2,
     xaxs = "i", yaxs = "i"
   )
 
   lines(fits@MCF$time[fits@MCF$scream_aid == "A+/ID-"],
     fits@MCF$MCF[fits@MCF$scream_aid == "A+/ID-"],
-    col = global_kicols[2],
+    col = global_cols[3],
     lwd = 3,
-    lty = 2
+    lty = 1
   )
 
   lines(fits@MCF$time[fits@MCF$scream_aid == "A-/ID+"],
     fits@MCF$MCF[fits@MCF$scream_aid == "A-/ID+"],
-    col = global_kicols[3],
+    col = global_cols[8],
     lwd = 3,
-    lty = 3
+    lty = 2
   )
 
   lines(fits@MCF$time[fits@MCF$scream_aid == "A+/ID+"],
     fits@MCF$MCF[fits@MCF$scream_aid == "A+/ID+"],
-    col = global_kicols[4],
+    col = global_cols[8],
     lwd = 3,
-    lty = 4
+    lty = 1
   )
 
   axis(2, seq(0, 3, 1), seq(0, 300, 100), las = 2, cex.axis = cexmy)

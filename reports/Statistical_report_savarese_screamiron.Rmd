@@ -168,6 +168,10 @@ The analysis is performed on patients with hb, transferrin and ferritin at index
 
 ```
 
+```{r, child = "../src/tab_follow_meds.Rmd"}
+
+```
+
 \clearpage
 
 ## Predictors of ID at index

@@ -108,7 +108,6 @@ tabvars_not_in_mod <- c(
   "ddr_ironoralsupp",
   "ddr_ironoralsupp_priorinc2016",
   "ddr_ironoralsupp_postinc2017",
-  "fcm_ironoralpost2017",
   
   "shf_nyha",
   "shf_map",

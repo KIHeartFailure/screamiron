@@ -78,7 +78,7 @@ funcovertime <- function(data, ylimmy = c(0, 100)) {
     type = "b",
     pch = 19,
     lty = 1,
-    col = global_kicols[1:4],
+    col = global_cols[c(8, 6, 4, 2, 1)],
     # lty = unique(riket$ltymy),
     lwd = 3,
     # cex = 1.5,
@@ -96,7 +96,7 @@ funcovertime <- function(data, ylimmy = c(0, 100)) {
   axis(1, at = 1:nrow(trend2), labels = 2006:2018, cex.axis = cexmy)
   axis(2, seq(ylimmy[1], ylimmy[2], 10), las = 2, cex.axis = cexmy)
 
-  legend("topleft", col = global_kicols[1:4], lwd = 3, colnames(trend2), bty = "n")
+  legend("topleft", col = global_cols[c(8, 6, 4, 2, 1)], lwd = 3, colnames(trend2), bty = "n")
   
   return(trendprint)
 }

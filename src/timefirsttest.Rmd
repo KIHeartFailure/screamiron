@@ -23,7 +23,7 @@ kmlabfunc <- function(data, lab, labname, posadj = rep(0, 3), endtime = 3) {
     ylab = paste0("Time to first ", labname, " test"),
     xscale = 365,
     yscale = 100,
-    col = global_kicols[1],
+    col = global_cols[8],
     mark.time = FALSE,
     bty = "n",
     xlim = c(0, 366 * endtime),
@@ -40,7 +40,7 @@ kmlabfunc <- function(data, lab, labname, posadj = rep(0, 3), endtime = 3) {
   axis(2, seq(0, 1, 0.25), seq(0, 100, 25), las = 2, cex.axis = cexmy)
   axis(1, at = 0:endtime * 365, labels = 0:endtime, cex.axis = cexmy)
 
-  lines(fit2016, fun = "event", col = global_kicols[2:3], lty = 2:3, lwd = 3)
+  lines(fit2016, fun = "event", col = global_cols[c(4, 6)], lty = 2:3, lwd = 3)
 
   yposall <- 1 - summary(fitall, 366 * endtime, extend = T)$surv
   ypos2016 <- 1 - summary(fit2016, 366 * endtime, extend = T)$surv

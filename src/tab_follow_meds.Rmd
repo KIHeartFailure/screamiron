@@ -1,0 +1,68 @@
+```{r tabfollowmeds, cache=cacheon}
+
+tabfollowmedsfunc <- function(data, stratavar, tabname, xlsname) {
+  tabfollow <- print(CreateTableOne(
+    vars = c(
+      "shf_ferrocarboxymaltosis",
+  "shf_ferrocarboxymaltosis_priorinc2016",
+  "shf_ferrocarboxymaltosis_postinc2017",
+  "ddr_ironoralsupp",
+  "ddr_ironoralsupp_priorinc2016",
+  "ddr_ironoralsupp_postinc2017"
+    ),
+    data = data %>% filter(scream_id == "Yes"),
+    strata = stratavar
+  ),
+  missing = FALSE, printToggle = FALSE, nonnormal = tabvars,
+  catDigits = 1, contDigits = 1,
+  noSpaces = TRUE,
+  explain = FALSE,
+  test = FALSE
+  )
+
+  tabfollow <- as_tibble(cbind(Variable = rownames(tabfollow), tabfollow))
+  
+  write.xlsx(tabfollow, paste0("./output/tabs/tabfollowmeds_", xlsname, "_", Sys.Date(), ".xlsx"), rowNames = FALSE, overwrite = TRUE)
+
+  default_kable(tabfollow,
+    font_size = 6,
+    scale_down = FALSE,
+    caption = paste0("FCM and oral iron for patients with ID+ at index by ID at ", tabname),
+    escape = TRUE
+  ) 
+}
+```
+
+
+```{r tabfollowmeds6mo, cache=cacheon, dependson="tabfollowmeds"}
+tabfollowmedsfunc(data = rsdatalab, stratavar = "scream_id6mo", "6 mo", xlsname = "6mo")
+```
+
+```{r tabfollowmeds1yr, cache=cacheon, dependson="tabfollowmeds"}
+tabfollowmedsfunc(data = rsdatalab, stratavar = "scream_id1yr", "1 yr", xlsname = "1yr")
+```
+
+
+```{r tabfollowmeds6moref, cache=cacheon, dependson="tabfollowmeds"}
+tabfollowmedsfunc(data = rsdatalab %>% filter(shf_ef_cat == "HFrEF"), stratavar = "scream_id6mo", "6 mo - HFrEF", xlsname = "6moref")
+```
+
+```{r tabfollowmeds1yrref, cache=cacheon, dependson="tabfollowmeds"}
+tabfollowmedsfunc(data = rsdatalab %>% filter(shf_ef_cat == "HFrEF"), stratavar = "scream_id1yr", "1 yr - HFrEF", xlsname = "1yrref")
+```
+
+```{r tabfollowmeds6momref, cache=cacheon, dependson="tabfollowmeds"}
+tabfollowmedsfunc(data = rsdatalab %>% filter(shf_ef_cat == "HFmrEF"), stratavar = "scream_id6mo", "6 mo - HFmrEF", xlsname = "6momref")
+```
+
+```{r tabfollowmeds1yrmref, cache=cacheon, dependson="tabfollowmeds"}
+tabfollowmedsfunc(data = rsdatalab %>% filter(shf_ef_cat == "HFmrEF"), stratavar = "scream_id1yr", "1 yr - HFmrEF", xlsname = "1yrmref")
+```
+
+```{r tabfollowmeds6mopef, cache=cacheon, dependson="tabfollowmeds"}
+tabfollowmedsfunc(data = rsdatalab %>% filter(shf_ef_cat == "HFpEF"), stratavar = "scream_id6mo", "6 mo - HFpEF", xlsname = "6mopef")
+```
+
+```{r tabfollowmeds1yrpef, cache=cacheon, dependson="tabfollowmeds"}
+tabfollowmedsfunc(data = rsdatalab %>% filter(shf_ef_cat == "HFpEF"), stratavar = "scream_id1yr", "1 yr - HFpEF", xlsname = "1yrpef")
+```
