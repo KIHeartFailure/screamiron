@@ -21,17 +21,27 @@ rsdata <- rsdata %>%
   filter(shf_age >= 18 & !is.na(shf_age))
 flow <- rbind(flow, c("Exclude posts < 18 years", nrow(rsdata)))
 
+rsdata <- left_join(rsdata,
+  dors %>%
+    filter(diag_no == "ULORSAK") %>%
+    rename(sos_deathcause = diagnos) %>%
+    select(LopNr, dodsdat, sos_deathcause),
+  by = "LopNr"
+) %>%
+  mutate(sos_deathdtm = ymd(dodsdat)) %>%
+  select(-dodsdat)
+
 rsdata <- rsdata %>%
-  filter((shf_indexdtm < shf_deathdtm | is.na(shf_deathdtm))) # enddate prior to indexdate
+  filter((shf_indexdtm < sos_deathdtm | is.na(sos_deathdtm))) # enddate prior to indexdate
 flow <- rbind(flow, c("Exclude posts with end of follow-up <= index date (died in hospital)", nrow(rsdata)))
 
 rsdata <- rsdata %>%
   filter(shf_indexdtm >= ymd("2006-01-01"))
-flow <- rbind(flow, c("Exclude posts with with index date < 2006-01-01", nrow(rsdata)))
+flow <- rbind(flow, c("Exclude posts with index date < 2006-01-01", nrow(rsdata)))
 
 rsdata <- rsdata %>%
   filter(shf_indexdtm <= ymd("2018-12-31"))
-flow <- rbind(flow, c("Exclude posts with with index date > 2018-12-31", nrow(rsdata)))
+flow <- rbind(flow, c("Exclude posts with index date > 2018-12-31", nrow(rsdata)))
 
 rsdata <- rsdata %>%
   filter(!is.na(shf_ef))
@@ -60,14 +70,14 @@ flow <- rbind(flow, c("Exclude posts emigrated from Stockholm prior to indexdate
 
 # check lab inclusion criteria
 tmp_rsdatalab <- left_join(rsdata %>% select(LopNr, shf_indexdtm),
-                           lab_avg,
-                           by = "LopNr"
+  lab_avg,
+  by = "LopNr"
 ) %>%
   mutate(diff = as.numeric(shf_indexdtm - labdtm)) %>%
   filter(diff >= 0 & diff < 90 &
-           !is.na(ferritin) &
-           !is.na(transf_sat) &
-           !is.na(hb)) %>%
+    !is.na(ferritin) &
+    !is.na(transf_sat) &
+    !is.na(hb)) %>%
   group_by(LopNr) %>%
   arrange(diff) %>%
   slice(1) %>%

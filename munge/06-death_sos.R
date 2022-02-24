@@ -41,16 +41,6 @@ rsdata <- left_join(rsdata,
 #  slice(1) %>%
 #  ungroup()
 
-rsdata <- left_join(rsdata,
-  dors %>% 
-    filter(diag_no == "ULORSAK") %>% 
-    rename(sos_deathcause = diagnos) %>% 
-    select(LopNr, dodsdat, sos_deathcause),
-  by = "LopNr"
-) %>%
-  mutate(sos_deathdtm = ymd(dodsdat)) %>%
-  select(-dodsdat)
-
 rsdata <- rsdata %>%
   mutate(
     censdtm = pmin(sos_deathdtm, flyttdtm, na.rm = TRUE),
@@ -61,7 +51,6 @@ rsdata <- rsdata %>%
                            labels = c("No", "Yes")),
     sos_outtime_death = as.numeric(censdtm - shf_indexdtm)
   ) %>%
-  filter(censdtm >= shf_indexdtm) %>% # 0 obs
   select(-shf_deathdtm)
 
 rsdata <- create_deathvar(
