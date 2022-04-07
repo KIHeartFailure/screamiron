@@ -171,9 +171,15 @@ s5 <- survfunc(
   rep = TRUE
 )
 
+s6 <- survfunc(
+  time = "sos_outtime_death",
+  event = "sos_out_deathcvnohosphf",
+  eventname = "CV death/total HFH (%)",
+  rep = TRUE
+)
 
 outall <- rbind(
-  s1, s2, s3, s4, s5
+  s1, s2, s3, s4, s5, s6
 )
 
 write.xlsx(outall, paste0("./output/tabs/out_idfcm_", Sys.Date(), ".xlsx"), rowNames = FALSE, overwrite = TRUE)

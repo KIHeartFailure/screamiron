@@ -206,6 +206,7 @@ The following outcomes are considered:
 - All-cause mortality
 - First HF hospitalization
 - Total HF hospitalization
+- CV mortality + Total HF hospitalization
 
 Data were censored at 3 years after index, 2019-12-31 or death/move from Stockholm county. 
 

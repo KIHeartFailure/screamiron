@@ -277,6 +277,7 @@ rsdata <- rsdata %>%
     ## Outomes
     ### combined outcomes
     sos_out_deathcvhosphf = if_else(sos_out_deathcv == "Yes" | sos_out_hosphf == "Yes", "Yes", "No"),
+    sos_out_deathcvnohosphf = if_else(sos_out_deathcv == "Yes", sos_out_nohosphf + 1, sos_out_nohosphf),
 
     #### comp risk
     sos_out_deathcvhosphf_cr = create_crevent(sos_out_deathcvhosphf, sos_out_death),

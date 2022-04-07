@@ -63,7 +63,7 @@ kmfunc <- function(data, time, event, eventname, yposplus = rep(0, 4)) {
 
 ```{r mcf, cache=cacheon}
 
-mcffunc <- function(data, datarec, event, eventname, yposplus = rep(0, 2)) {
+mcffunc <- function(data, datarec, eventname, yposplus = rep(0, 2)) {
   cexmy <- 1.2
   # needed for n at risk
   fitsn <- survfit(Surv(sos_outtime_death, sos_out_death == "Yes") ~ scream_aid,
@@ -195,7 +195,14 @@ kmfunc(
 mcffunc(
   data = rsdatalab,
   datarec = rsdatalab_rec_hosphf,
-  event = "sos_out_nohosphf",
   eventname = "Cumulative mean of HFH (per 100 patients)"
+)
+```
+
+```{r deathcvrechosphf, fig.cap="CV death/total HFH", cache=cacheon, dependson="mcf", fig.width=8, fig.height=7}
+mcffunc(
+  data = rsdatalab,
+  datarec = rsdatalab_rec_deathcvhosphf,
+  eventname = "Cumulative mean of CVD/HFH (per 100 patients)"
 )
 ```
