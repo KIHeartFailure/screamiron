@@ -122,7 +122,7 @@ tab1func <- function(data, stratavar, tabname, xlsname) {
       "Categorical variables are presented with n (%) and tested with chi-square test and continuous variables with median [q1-q3] and tested with Kruskal-Wallis test."
     ),
     symbol = c(
-      "Included in the multiple imputation model (althought not necessarily imputed if there is no missing data) and logistic/cox models. FCM is included only in the consistency analyses",
+      "Included in the multiple imputation model (althought not necessarily imputed if there is no missing data) and logistic/cox models. FCM is included only in the consistency analyses.",
       "Medium within index year",
       "Medium within EF",
       "Missing is for patients with indexyear <= 2016 and >= 2017 respectively"
@@ -165,4 +165,8 @@ tab1func(rsdatalab %>% filter(shf_ef_cat == "HFmrEF"), "scream_id", "by ID - Iro
 
 ```{r tab1idpef, cache=cacheon, dependson="tab1"}
 tab1func(rsdatalab %>% filter(shf_ef_cat == "HFpEF"), "scream_id", "by ID - Iron population HFpEF", xlsname = "id_pef")
+```
+
+```{r tab1idindex6mo, cache=cacheon, dependson="tab1"}
+tab1func(rsdatalab %>% filter(!is.na(scream_id6mo)), "scream_id_index6mo", "by ID at index and 6 mo", xlsname = "idindex6mo")
 ```

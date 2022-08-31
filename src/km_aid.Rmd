@@ -1,6 +1,6 @@
 ```{r km, cache=cacheon}
 
-kmfunc <- function(data, time, event, eventname, yposplus = rep(0, 4)) {
+kmfunc <- function(data = rsdatalab, time, event, eventname, yposplus = rep(0, 4)) {
   cexmy <- 1.2
   fits <- survfit(formula(paste0("Surv(", time, ",", event, "=='Yes') ~ scream_aid")),
     data = data
@@ -63,14 +63,14 @@ kmfunc <- function(data, time, event, eventname, yposplus = rep(0, 4)) {
 
 ```{r mcf, cache=cacheon}
 
-mcffunc <- function(data, datarec, eventname, yposplus = rep(0, 2)) {
+mcffunc <- function(event, eventname, yposplus = rep(0, 2)) {
   cexmy <- 1.2
   # needed for n at risk
   fitsn <- survfit(Surv(sos_outtime_death, sos_out_death == "Yes") ~ scream_aid,
-    data = data
+    data = rsdatalab
   )
 
-  fits <- mcf(Recur(sos_outtime, LopNr, sos_out) ~ scream_aid, data = datarec)
+  fits <- mcf(formula(paste0("Recur(sos_outtime, LopNr, ", event, " == '1') ~ scream_aid")), data = rsdatalab_rec)
 
   # c(bottom, left, top, right)
   par(mar = c(8.5, 8.6, 1, 4.25) + 0.1)
@@ -124,7 +124,7 @@ mcffunc <- function(data, datarec, eventname, yposplus = rep(0, 2)) {
 
   ylabs <- bind_cols(
     ypos = c(ypos + yposplus),
-    ytext = levels(data %>% pull(scream_aid))
+    ytext = levels(rsdatalab %>% pull(scream_aid))
   )
 
   mtext(
@@ -153,7 +153,6 @@ mcffunc <- function(data, datarec, eventname, yposplus = rep(0, 2)) {
 
 ```{r deathcvhfh, fig.cap="CV death/first HFH", cache=cacheon, dependson="km", fig.width=8, fig.height=7}
 kmfunc(
-  data = rsdatalab,
   time = "sos_outtime_hosphf",
   event = "sos_out_deathcvhosphf",
   eventname = "CV death/first HFH (%)",
@@ -163,7 +162,6 @@ kmfunc(
 
 ```{r deathcv, fig.cap="CV death", cache=cacheon, dependson="km", fig.width=8, fig.height=7}
 kmfunc(
-  data = rsdatalab,
   time = "sos_outtime_death",
   event = "sos_out_deathcv",
   eventname = "CV death (%)",
@@ -173,7 +171,6 @@ kmfunc(
 
 ```{r death, fig.cap="All-cause death", cache=cacheon, dependson="km", fig.width=8, fig.height=7}
 kmfunc(
-  data = rsdatalab,
   time = "sos_outtime_death",
   event = "sos_out_death",
   eventname = "All-cause mortality (%)",
@@ -183,7 +180,6 @@ kmfunc(
 
 ```{r hfh, fig.cap="First HFH", cache=cacheon, dependson="km", fig.width=8, fig.height=7}
 kmfunc(
-  data = rsdatalab,
   time = "sos_outtime_hosphf",
   event = "sos_out_hosphf",
   eventname = "First HFH (%)",
@@ -193,16 +189,14 @@ kmfunc(
 
 ```{r rechosphf, fig.cap="Total HFH", cache=cacheon, dependson="mcf", fig.width=8, fig.height=7}
 mcffunc(
-  data = rsdatalab,
-  datarec = rsdatalab_rec_hosphf,
+  event = "sos_out_hosphfrec",
   eventname = "Cumulative mean of HFH (per 100 patients)"
 )
 ```
 
 ```{r deathcvrechosphf, fig.cap="CV death/total HFH", cache=cacheon, dependson="mcf", fig.width=8, fig.height=7}
 mcffunc(
-  data = rsdatalab,
-  datarec = rsdatalab_rec_deathcvhosphf,
+  event = "sos_out_deathcvhosphfrec",
   eventname = "Cumulative mean of CVD/HFH (per 100 patients)"
 )
 ```

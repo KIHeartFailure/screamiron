@@ -97,7 +97,7 @@ funcovertime <- function(data, ylimmy = c(0, 100)) {
   axis(2, seq(ylimmy[1], ylimmy[2], 10), las = 2, cex.axis = cexmy)
 
   legend("topleft", col = global_cols[c(8, 6, 4, 2, 1)], lwd = 3, colnames(trend2), bty = "n")
-  
+
   return(trendprint)
 }
 ```
@@ -115,7 +115,7 @@ hbtrend <- funcovertime(data = lab_iron %>%
 default_kable(hbtrend,
   font_size = 8,
   caption = paste0("Trend over time of hb testing"),
-  escape = TRUE, 
+  escape = TRUE,
   scale_down = F
 )
 ```
@@ -132,7 +132,7 @@ fttrend <- funcovertime(data = lab_iron %>%
 default_kable(fttrend,
   font_size = 8,
   caption = paste0("Trend over time of ferritin and transferrin testing"),
-  escape = TRUE, 
+  escape = TRUE,
   scale_down = F
 )
 ```
@@ -140,8 +140,8 @@ default_kable(fttrend,
 ```{r overtimehbft, cache=cacheon, dependson = "overtime", fig.cap="Trend over time of hb, ferritin & transferrin testing", fig.width=8, fig.height=7}
 
 hbfttrend <- funcovertime(data = lab_iron %>%
-  filter(!is.na(hb) & 
-           !is.na(ferritin) &
+  filter(!is.na(hb) &
+    !is.na(ferritin) &
     !is.na(transf_sat)))
 ```
 
@@ -150,7 +150,104 @@ hbfttrend <- funcovertime(data = lab_iron %>%
 default_kable(hbfttrend,
   font_size = 8,
   caption = paste0("Trend over time of hb, ferritin and transferrin testing"),
-  escape = TRUE, 
+  escape = TRUE,
+  scale_down = F
+)
+```
+
+\clearpage
+
+```{r overtimebyanemia, cache=cacheon, fig.cap="Trend over time of ferritin & transferrin testing by anemia", fig.width=8, fig.height=7}
+
+lab_iron_year <- lab_iron %>%
+  filter(!is.na(ferritin) &
+    !is.na(transf_sat)) %>%
+  mutate(labyear = year(labdtm)) %>%
+  group_by(LopNr, labyear) %>%
+  slice(1) %>%
+  ungroup() %>%
+  mutate(hbtf = 1)
+
+trendfunc <- function(year) {
+  tmpyear <- left_join(rsdata,
+    lab_iron_year %>% filter(labyear == year),
+    by = "LopNr"
+  ) %>%
+    filter(
+      censdtm >= ymd(paste0(year, "1231")) &
+        !is.na(scream_anemia)
+    ) %>%
+    mutate(hbtf = replace_na(hbtf, 0))
+
+  anemia <- tmpyear %>%
+    group_by(scream_anemia) %>%
+    count(hbtf) %>%
+    mutate(
+      per = n / sum(n) * 100,
+      ntot = paste0(n, "/", sum(n)),
+      npercent = paste0(ntot, " (", fn(per, 1), "%)"),
+      year = year
+    ) %>%
+    ungroup() %>%
+    filter(hbtf == 1)
+}
+trend <- trendfunc(2006)
+trend <- rbind(trend, trendfunc(2007))
+trend <- rbind(trend, trendfunc(2008))
+trend <- rbind(trend, trendfunc(2009))
+trend <- rbind(trend, trendfunc(2010))
+trend <- rbind(trend, trendfunc(2011))
+trend <- rbind(trend, trendfunc(2012))
+trend <- rbind(trend, trendfunc(2013))
+trend <- rbind(trend, trendfunc(2014))
+trend <- rbind(trend, trendfunc(2015))
+trend <- rbind(trend, trendfunc(2016))
+trend <- rbind(trend, trendfunc(2017))
+trend <- rbind(trend, trendfunc(2018))
+
+
+trendprint <- trend %>%
+  select(scream_anemia, year, npercent) %>%
+  pivot_wider(names_from = scream_anemia, values_from = npercent)
+
+trend2 <- trend %>%
+  select(scream_anemia, year, per) %>%
+  pivot_wider(names_from = scream_anemia, values_from = per) %>%
+  select(-year) %>%
+  as.matrix()
+
+cexmy <- 1.2
+# c(bottom, left, top, right) default c(5, 4, 4, 2) + 0.1.
+par(mar = c(4, 4, .5, .5) + 0.1)
+
+matplot(trend2,
+  type = "b",
+  pch = 19,
+  lty = 1,
+  col = global_cols[c(8, 6, 4, 2, 1)],
+  # lty = unique(riket$ltymy),
+  lwd = 3,
+  # cex = 1.5,
+  axes = FALSE,
+  xaxs = "i",
+  yaxs = "i",
+  ylim = c(0, 100),
+  xlim = c(1 - 0.5, nrow(trend2) + 0.5),
+  ylab = "Percent",
+  xlab = "Year",
+  cex.lab = cexmy
+)
+
+box(bty = "l")
+axis(1, at = 1:nrow(trend2), labels = 2006:2018, cex.axis = cexmy)
+axis(2, seq(0, 100, 10), las = 2, cex.axis = cexmy)
+
+legend("topleft", col = global_cols[c(8, 6, 4, 2, 1)], lwd = 3, c("A-", "A+"), bty = "n")
+
+default_kable(trendprint,
+  font_size = 8,
+  caption = paste0("Trend over time of ferritin and transferrin testing by anemia"),
+  escape = TRUE,
   scale_down = F
 )
 ```

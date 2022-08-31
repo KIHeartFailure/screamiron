@@ -104,6 +104,15 @@ rsdata <- rsdata %>%
     levels = 1:4,
     labels = c("A-/ID-", "A+/ID-", "A-/ID+", "A+/ID+")
     ),
+    scream_id_index6mo = factor(case_when(
+      is.na(scream_id) | is.na(scream_id6mo) ~ NA_real_,
+      scream_id == "No" & scream_id6mo == "No" ~ 4,
+      scream_id == "Yes" & scream_id6mo == "No" ~ 1,
+      scream_id == "No" & scream_id6mo == "Yes" ~ 3,
+      scream_id == "Yes" & scream_id6mo == "Yes" ~ 2
+    ),
+    levels = 1:4, labels = c("ID+/ID-", "ID+/ID+", "ID-/ID+", "ID-/ID-")
+    ),
 
     ### 1 year
     scream_anemia1yr = case_when(

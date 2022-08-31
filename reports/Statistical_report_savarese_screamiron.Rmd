@@ -99,9 +99,10 @@ comparisons were made and therefore the results should be viewed with some care.
 
 ## Missing data
 
-Missing data was imputed with multiple imputation (n = 10) using mice [@mice]. 
+Missing data was imputed with multiple imputation (n = 20) using mice [@mice]. 
 Variables included in the model are indicated in 
-Table \ref{tab:tab1aid}. The imputation is performed only on patients with hb, transferrin and ferritin at index (Iron population). 
+Table \ref{tab:tab1aid}. BMI is imputed using weight and height separately and after the imputation combining into BMI. 
+The imputation is performed only on patients with hb, transferrin and ferritin at index (Iron population). 
 
 As a consistency analysis FCM is assumed to be No for all registrations <=2016 
 and for registrations >= 2017 it is imputed with multiple imputation. 
@@ -299,7 +300,17 @@ Table \ref{tab:tab1aid}, ID and the interaction between ID and the respective va
 
 ```
 
-\newpage
+\clearpage 
+
+#### Estimates for the other variables in the model. 
+
+Note that this model is the same as presented in Table \ref{tab:outtabid} and \ref{tab:outtabidfcm} (Adjusted model).  
+
+```{r, child = "../src/outtab_id_othervars.Rmd"}
+
+```
+
+\clearpage
 
 # Reproducibility
 

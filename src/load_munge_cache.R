@@ -16,8 +16,7 @@ ProjectTemplate::cache("metaout")
 
 ProjectTemplate::cache("rsdata")
 ProjectTemplate::cache("rsdatalab")
-ProjectTemplate::cache("rsdatalab_rec_hosphf")
-ProjectTemplate::cache("rsdatalab_rec_deathcvhosphf")
+ProjectTemplate::cache("rsdatalab_rec")
 
 ProjectTemplate::cache("imprsdatalab")
 ProjectTemplate::cache("imprsdatalabfcm")

@@ -1,0 +1,45 @@
+```{r outtabidothervarsmod, cache=cacheon}
+survfuncov <- function(data, modvarsmy, tabname = "") {
+  modvarstmp <- modvarsmy[!modvarsmy %in% c("scream_id")]
+
+  amod <- with(data, coxph(formula(paste0(
+    "Surv(sos_outtime_hosphf, sos_out_deathcvhosphf == 'Yes') ~ scream_id +",
+    paste(modvarstmp, collapse = " + ")
+  ))))
+
+  ## df the number of events minus the regression coefficients.
+  ## There is support for this from middle of page 149 of the book by Parmer & Machin (ISBN 0471936405)
+  asmod <- summary(pool(amod,
+    dfcom =
+      (amod$analyses[[1]]$nevent - length(amod$analyses[[1]]$coefficients))
+  ))
+
+  out <- bind_cols(
+    Variable = as.character(asmod$term),
+    logor = asmod$estimate,
+    lci = asmod$estimate - global_z05 * asmod$std.error,
+    uci = asmod$estimate + global_z05 * asmod$std.error,
+    p = fn(asmod$p.value, dig = 3, p = TRUE)
+  ) %>%
+    mutate(orci = paste0(fn(exp(logor), 2), " (", fn(exp(lci), 2), "-", fn(exp(uci), 2), ")")) %>%
+    select(Variable, orci, p)
+  
+  colnames(out) <- c("Variable", "OR (95% Ci)", "p-value")
+
+  write.xlsx(out, paste0("./output/tabs/Association between all variables and outcomes_", tabname, Sys.Date(), ".xlsx"), rowNames = FALSE, overwrite = TRUE)
+
+  default_kable(out,
+    font_size = 5,
+    scale_down = F,
+    caption = paste("Association between all variables and outcomes", tabname)
+  )
+}
+```
+
+```{r outtabidothervars, cache=cacheon, dependson="outtabidothervarsmod"}
+survfuncov(data = imprsdatalab, modvarsmy = modvars, tabname = "")
+```
+
+```{r outtabidothervarsfcm, cache=cacheon, dependson="outtabidothervarsmod"}
+survfuncov(data = imprsdatalabfcm, modvarsmy = modvarsfcm, tabname = " - Consistency analysis with FCM")
+```

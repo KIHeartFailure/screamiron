@@ -157,38 +157,38 @@ survfunc <- function(time, event, eventname, rep = FALSE) {
 s1 <- survfunc(
   time = "sos_outtime_hosphf",
   event = "sos_out_deathcvhosphf",
-  eventname = "CV death/first HFH (%)"
+  eventname = "CV death/first HFH"
 )
 
 s2 <- survfunc(
   time = "sos_outtime_death",
   event = "sos_out_deathcv",
-  eventname = "CV death (%)"
+  eventname = "CV death"
 )
 
 s3 <- survfunc(
   time = "sos_outtime_death",
   event = "sos_out_death",
-  eventname = "All-cause mortality (%)"
+  eventname = "All-cause mortality"
 )
 
 s4 <- survfunc(
   time = "sos_outtime_hosphf",
   event = "sos_out_hosphf",
-  eventname = "First HFH (%)"
+  eventname = "First HFH"
 )
 
 s5 <- survfunc(
   time = "sos_outtime_death",
   event = "sos_out_nohosphf",
-  eventname = "Total HFH (%)",
+  eventname = "Total HFH",
   rep = TRUE
 )
 
 s6 <- survfunc(
   time = "sos_outtime_death",
   event = "sos_out_deathcvnohosphf",
-  eventname = "CV death/total HFH (%)",
+  eventname = "CV death/total HFH",
   rep = TRUE
 )
 
