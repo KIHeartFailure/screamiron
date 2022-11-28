@@ -1,6 +1,5 @@
 ---
 title: 'Statistical report: Phenotyping heart failure patients with iron deficiency'
-subtitle: 'DRAFT'
 author: 'Statistician: Lina Benson'
   
 date: "`r Sys.Date()`"
@@ -16,7 +15,6 @@ nocite: '@*'
 urlcolor: blue
 linkcolor: black
 header-includes:
-   - \usepackage{draftwatermark}
 ---
 
 \newpage 
@@ -86,7 +84,7 @@ where the one closest to index is chosen. If there are two tests of the same lab
 from the same date the mean is calculated. The ferritin, transferrin and 
 hb value must be from the same date, the other labs can be from different dates (within the 90 days).
 
-ddd_ironoralsupp is defined as at least one dispensed prescription with ATC strting 
+ddd_ironoralsupp is defined as at least one dispensed prescription with ATC starting 
 with B03AA, B03AB, B03AD or B03AE within 5 months prior up to 14 days after index. 
 
 # Statistical analysis 
