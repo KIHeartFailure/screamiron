@@ -1,4 +1,4 @@
-# R code for the project Phenotyping heart failure patients with iron deficiency
+# R code for the project Iron deficiency in heart failure: screening, prevalence, incidence and outcome
 
 The aim of this R code is to be transparent and document the data handling 
 and statistical analyses performed for the project.
