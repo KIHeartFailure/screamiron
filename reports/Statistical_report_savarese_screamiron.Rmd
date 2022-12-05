@@ -114,10 +114,11 @@ and for registrations >= 2017 it is imputed with multiple imputation.
 
 ## Testing over time 
 
-The denominator is the full population that are alive and living in Stockholm county on 31 December of the respective calender year. 
-The numerator is the number of patients that have at least one  
-lab measure of hb or ferritin and transferrin (on same date) in the respective calender year. 
-Note that this could be prior to inclusion in SwedeHF. 
+The full population is used where patients are included in the denominator if their 
+index date is prior to 1 Jan of the respective year and are alive and at 
+risk (living in Stockholm county) on 31 Dec of the respective calender year. 
+The numerator is a subset of the denominator with patients that have at least one  
+lab measure of hb or ferritin and transferrin (on same date) in the respective year. 
 
 ```{r, child = "../src/overtime.Rmd"}
 

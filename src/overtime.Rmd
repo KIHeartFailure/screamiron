@@ -1,12 +1,21 @@
 ```{r overtime, cache=cacheon}
 
-funcovertime <- function(data, ylimmy = c(0, 100)) {
-  lab_iron_year <- data %>%
-    mutate(labyear = year(labdtm)) %>%
+funcovertime <- function(data, ylimmy = c(0, 100), legpos = "topleft") {
+  lab_iron_year <- left_join(
+    rsdata %>% select(LopNr, shf_indexdtm),
+    data,
+    by = "LopNr"
+  ) %>%
+    mutate(
+      tmptimehbtf = as.numeric(labdtm - shf_indexdtm),
+      labyear = year(labdtm),
+      hbtf = 1
+    ) %>%
+    filter(tmptimehbtf > 0) %>%
     group_by(LopNr, labyear) %>%
     slice(1) %>%
     ungroup() %>%
-    mutate(hbtf = 1)
+    select(LopNr, labyear, hbtf)
 
   trendfunc <- function(year) {
     tmpyear <- left_join(rsdata,
@@ -14,7 +23,8 @@ funcovertime <- function(data, ylimmy = c(0, 100)) {
       by = "LopNr"
     ) %>%
       filter(
-        censdtm >= ymd(paste0(year, "1231"))
+        censdtm >= ymd(paste0(year, "1231")) &
+          shf_indexdtm <= ymd(paste0(year, "0101"))
       ) %>%
       mutate(hbtf = replace_na(hbtf, 0))
 
@@ -45,8 +55,7 @@ funcovertime <- function(data, ylimmy = c(0, 100)) {
 
     out <- bind_rows(all, ef)
   }
-  trend <- trendfunc(2006)
-  trend <- rbind(trend, trendfunc(2007))
+  trend <- trendfunc(year = 2007)
   trend <- rbind(trend, trendfunc(2008))
   trend <- rbind(trend, trendfunc(2009))
   trend <- rbind(trend, trendfunc(2010))
@@ -73,7 +82,6 @@ funcovertime <- function(data, ylimmy = c(0, 100)) {
   # c(bottom, left, top, right) default c(5, 4, 4, 2) + 0.1.
   par(mar = c(4, 4, .5, .5) + 0.1)
 
-
   matplot(trend2,
     type = "b",
     pch = 19,
@@ -93,10 +101,10 @@ funcovertime <- function(data, ylimmy = c(0, 100)) {
   )
 
   box(bty = "l")
-  axis(1, at = 1:nrow(trend2), labels = 2006:2018, cex.axis = cexmy)
+  axis(1, at = 1:nrow(trend2), labels = 2007:2018, cex.axis = cexmy, gap.axis = 0.000000001)
   axis(2, seq(ylimmy[1], ylimmy[2], 10), las = 2, cex.axis = cexmy)
 
-  legend("topleft", col = global_cols[c(8, 6, 4, 2, 1)], lwd = 3, colnames(trend2), bty = "n")
+  legend(legpos, col = global_cols[c(8, 6, 4, 2, 1)], lwd = 3, colnames(trend2), bty = "n")
 
   return(trendprint)
 }
@@ -107,7 +115,7 @@ funcovertime <- function(data, ylimmy = c(0, 100)) {
 hbtrend <- funcovertime(data = lab_iron %>%
   filter(
     !is.na(hb)
-  ))
+  ), legpos = "bottomleft")
 ```
 
 ```{r overtimehbprint, cache=cacheon, dependson = c("overtime", "overtimehb")}
@@ -159,14 +167,24 @@ default_kable(hbfttrend,
 
 ```{r overtimebyanemia, cache=cacheon, fig.cap="Trend over time of ferritin & transferrin testing by anemia", fig.width=8, fig.height=7}
 
-lab_iron_year <- lab_iron %>%
-  filter(!is.na(ferritin) &
-    !is.na(transf_sat)) %>%
-  mutate(labyear = year(labdtm)) %>%
+lab_iron_year <- left_join(
+  rsdata %>% select(LopNr, shf_indexdtm),
+  lab_iron %>%
+    filter(!is.na(ferritin) &
+      !is.na(transf_sat)),
+  by = "LopNr"
+) %>%
+  mutate(
+    tmptimehbtf = as.numeric(labdtm - shf_indexdtm),
+    labyear = year(labdtm),
+    hbtf = 1
+  ) %>%
+  filter(tmptimehbtf > 0) %>%
   group_by(LopNr, labyear) %>%
   slice(1) %>%
   ungroup() %>%
-  mutate(hbtf = 1)
+  select(LopNr, labyear, hbtf)
+
 
 trendfunc <- function(year) {
   tmpyear <- left_join(rsdata,
@@ -175,6 +193,7 @@ trendfunc <- function(year) {
   ) %>%
     filter(
       censdtm >= ymd(paste0(year, "1231")) &
+        shf_indexdtm <= ymd(paste0(year, "0101")) &
         !is.na(scream_anemia)
     ) %>%
     mutate(hbtf = replace_na(hbtf, 0))
@@ -239,7 +258,7 @@ matplot(trend2,
 )
 
 box(bty = "l")
-axis(1, at = 1:nrow(trend2), labels = 2006:2018, cex.axis = cexmy)
+axis(1, at = 1:nrow(trend2), labels = 2007:2018, cex.axis = cexmy, gap.axis = 0.00000000000001)
 axis(2, seq(0, 100, 10), las = 2, cex.axis = cexmy)
 
 legend("topleft", col = global_cols[c(8, 6, 4, 2, 1)], lwd = 3, c("A-", "A+"), bty = "n")
