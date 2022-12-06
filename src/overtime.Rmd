@@ -119,6 +119,7 @@ hbtrend <- funcovertime(data = lab_iron %>%
 ```
 
 ```{r overtimehbprint, cache=cacheon, dependson = c("overtime", "overtimehb")}
+write.xlsx(hbtrend, paste0("./output/tabs/Trend over time of hb testing_", Sys.Date(), ".xlsx"), rowNames = FALSE, overwrite = TRUE)
 
 default_kable(hbtrend,
   font_size = 8,
@@ -136,6 +137,7 @@ fttrend <- funcovertime(data = lab_iron %>%
 ```
 
 ```{r overtimeftprint, cache=cacheon, dependson = c("overtime", "overtimeft")}
+write.xlsx(fttrend, paste0("./output/tabs/Trend over time of ferritin and transferrin testing_", Sys.Date(), ".xlsx"), rowNames = FALSE, overwrite = TRUE)
 
 default_kable(fttrend,
   font_size = 8,
@@ -154,7 +156,7 @@ hbfttrend <- funcovertime(data = lab_iron %>%
 ```
 
 ```{r overtimehbftprint, cache=cacheon, dependson = c("overtime", "overtimehbft")}
-
+write.xlsx(hbfttrend, paste0("./output/tabs/Trend over time of hb, ferritin and transferrin testing_", Sys.Date(), ".xlsx"), rowNames = FALSE, overwrite = TRUE)
 default_kable(hbfttrend,
   font_size = 8,
   caption = paste0("Trend over time of hb, ferritin and transferrin testing"),
@@ -262,6 +264,8 @@ axis(1, at = 1:nrow(trend2), labels = 2007:2018, cex.axis = cexmy, gap.axis = 0.
 axis(2, seq(0, 100, 10), las = 2, cex.axis = cexmy)
 
 legend("topleft", col = global_cols[c(8, 6, 4, 2, 1)], lwd = 3, c("A-", "A+"), bty = "n")
+
+write.xlsx(trendprint, paste0("./output/tabs/Trend over time of ferritin and transferrin testing by anemia_", Sys.Date(), ".xlsx"), rowNames = FALSE, overwrite = TRUE)
 
 default_kable(trendprint,
   font_size = 8,
