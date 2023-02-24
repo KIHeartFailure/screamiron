@@ -1,10 +1,11 @@
 ```{r tab1, cache=cacheon}
 
-tab1func <- function(data, stratavar, tabname, xlsname) {
+tab1func <- function(data, stratavar, tabname, xlsname, addoverall = FALSE) {
   tab1 <- print(CreateTableOne(
     vars = tabvars,
     data = data,
-    strata = stratavar
+    strata = stratavar, 
+    addOverall = addoverall
   ),
   missing = TRUE, printToggle = FALSE, nonnormal = tabvars,
   catDigits = 1, contDigits = 1,
@@ -106,9 +107,12 @@ tab1func <- function(data, stratavar, tabname, xlsname) {
 
 
   ## fix in order to use escape = TRUE
-  colnames(tab1) <- sanitize_text(c(
+  if (!addoverall) {colnames(tab1) <- sanitize_text(c(
     "Variables", "Missing (%)", levels(data %>% pull(!!sym(stratavar))), "p-value"
-  ))
+  ))}
+  if (!addoverall) {colnames(tab1) <- sanitize_text(c(
+    "Variables", "Missing (%)", "Overall", levels(data %>% pull(!!sym(stratavar))), "p-value"
+  ))}
 
   footnote(
     default_kable(tab1,
@@ -152,7 +156,7 @@ tab1func(rsdatalab %>% filter(shf_ef_cat == "HFpEF"), "scream_aid", "by ID/A - I
 ```
 
 ```{r tab1id, cache=cacheon, dependson="tab1"}
-tab1func(rsdatalab, "scream_id", "by ID - Iron population", xlsname = "id")
+tab1func(data = rsdatalab, stratavar = "scream_id", tabname = "by ID - Iron population", xlsname = "id", addoverall = T)
 ```
 
 ```{r tab1idref, cache=cacheon, dependson="tab1"}
@@ -169,4 +173,18 @@ tab1func(rsdatalab %>% filter(shf_ef_cat == "HFpEF"), "scream_id", "by ID - Iron
 
 ```{r tab1idindex6mo, cache=cacheon, dependson="tab1"}
 tab1func(rsdatalab %>% filter(!is.na(scream_id6mo)), "scream_id_index6mo", "by ID at index and 6 mo", xlsname = "idindex6mo")
+```
+
+```{r tab1idinpat, cache=cacheon, dependson="tab1"}
+tab1func(rsdatalab %>% filter(shf_location == "In-patient"), "scream_id", "by ID In-patients - Iron population", xlsname = "id_inpat")
+```
+
+```{r tab1idoutpat, cache=cacheon, dependson="tab1"}
+tab1func(rsdatalab %>% filter(shf_location == "Out-patient"), "scream_id", "by ID Out-patients - Iron population", xlsname = "id_outpat")
+```
+
+```{r tab1fullid, cache=cacheon, dependson="tab1"}
+rsdata <- rsdata %>%
+  mutate(ironpop = if_else(is.na(scream_id), "No", "Yes"))
+tab1func(data = rsdata, stratavar = "ironpop", tabname = "by Iron population - Full population", xlsname = "fullpopiron", addoverall = T)
 ```
